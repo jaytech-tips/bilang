@@ -467,7 +467,10 @@ function beep(freq=800,dur=.15,vol=.3){
 function alarm(){
   beep(660,.12,.4);setTimeout(()=>beep(880,.15,.4),150);setTimeout(()=>beep(1100,.2,.4),350)
 }
-
+function notify(title, body){
+  if(!("Notification" in window)||Notification.permission==='denied')return;
+  if(Notification.permission==='granted'){new Notification(title,{body})}
+}
 // ============================================================
 // WARNING
 // ============================================================
@@ -569,6 +572,7 @@ function getPomodoroDuration(){
 function updateDisplay(){
   const m=data.settings.mode;
   if(!ts){
+    document.title='Client Clock';
     document.getElementById('timerDisplay').textContent='00:00:00';
     document.getElementById('timerDisplay').className='timer-display';
     document.getElementById('timerEarnings').textContent='';
@@ -598,6 +602,7 @@ function updateDisplay(){
           const autoNotes=document.getElementById('sessionNotes').value.trim()||'🍅 Pomodoro work session';
           const session={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),client:client,start:ts.startTime,end:Date.now(),duration:durSec,rate:rate,notes:autoNotes,status:'completed',timestamp:new Date().toISOString(),pomodoro:true};
           data.sessions.push(session);sv();
+          notify('🍅 Work complete!', `${client} — ${fmtShort(durSec)} logged`);
           showToast(`🍅 Work complete! ${fmtShort(durSec)} logged for ${client}`);
           const breakDur=data.settings.pomodoroBreak||5;
           const longBreakDur=data.settings.pomodoroLongBreak||15;
@@ -622,7 +627,7 @@ function updateDisplay(){
         // Break ended
         ts.running=false;
         alarm();
-        showToast('☕ Break over! Ready for next work session?');
+        notify('☕ Break over!', 'Ready for next work session?');
         ts.pomodoroType='break_done';
         svt();
         updateDisplay();
@@ -660,6 +665,7 @@ function updateDisplay(){
 
   document.getElementById('timerDisplay').textContent=display;
   document.getElementById('timerDisplay').className=cls;
+  document.title=display+' - Client Clock';
 
   // Running earnings
   if(m!=='pomodoro'){
@@ -703,6 +709,8 @@ function updateButtons(){
 }
 
 function startTimer(){
+  // Request notification permission on first use
+  if("Notification" in window&&Notification.permission==='default'){Notification.requestPermission()}
   const m=data.settings.mode;
   const client=document.getElementById('clientInput').value.trim();
   const rate=parseFloat(document.getElementById('rateInput').value)||data.settings.defaultRate;
@@ -751,6 +759,7 @@ function doneTimer(){
   // If it's a break, end the break
   if(ts.pomodoroType==='break'){
     ts.running=false;alarm();
+    notify('✅ Break ended!', 'Ready for next session?');
     showToast('☕ Break ended! Ready for next work session?');
     document.getElementById('pomodoroInfo').textContent='☕ Break done — start next work session when ready';
     document.getElementById('pomodoroProgress').classList.remove('visible');
