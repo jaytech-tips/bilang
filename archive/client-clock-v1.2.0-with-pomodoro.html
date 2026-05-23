@@ -13,12 +13,14 @@
     --shadow: 0 1px 3px rgba(0,0,0,0.06); --overlay: rgba(0,0,0,0.4);
     --input-bg: #fff; --hover-bg: #f1f3f5;
     --warn-bg: #fff8e1; --warn-border: #ffe082; --warn-text: #735f00;
+    --pomodoro: #e63946;
   }
   .dark {
     --bg: #121826; --card: #1e2433; --text: #e8e8f0; --muted: #8888aa;
     --muted-bg: #2a3040; --border: #2a3040; --shadow: 0 1px 3px rgba(0,0,0,0.2);
     --overlay: rgba(0,0,0,0.6); --input-bg: #2a3040; --hover-bg: #2a3040;
     --warn-bg: #2a2810; --warn-border: #554a10; --warn-text: #d4b84a;
+    --pomodoro: #ff6b6b;
   }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   body {
@@ -54,8 +56,15 @@
   .header-left h1{font-size:1.25rem;font-weight:700}
   .header-left h1 small{font-size:.65rem;font-weight:400;color:var(--muted);display:block}
   .header-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+
   .btn-tutorial{background:var(--primary);color:#fff;border:none;border-radius:var(--radius-sm);padding:6px 12px;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
   .btn-tutorial:hover{background:var(--primary-hover);transform:translateY(-1px)}
+
+  /* Mode toggle */
+  .mode-toggle{display:flex;gap:4px;margin-bottom:10px;justify-content:center}
+  .mode-btn{background:var(--card);border:2px solid var(--border);border-radius:8px;padding:5px 16px;font-size:.8rem;font-weight:600;cursor:pointer;transition:all .15s;color:var(--muted)}
+  .mode-btn.active{color:var(--text);border-color:var(--primary)}
+  .mode-btn[data-mode="pomodoro"].active{border-color:var(--pomodoro);color:var(--pomodoro)}
 
   /* Client presets */
   .presets{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;justify-content:center}
@@ -87,8 +96,22 @@
   .timer-display{font-size:3rem;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:2px;margin-bottom:4px;transition:color .2s}
   .timer-display.running{color:var(--success)}
   .timer-display.paused{color:var(--warning)}
+  .timer-display.pomodoro-work{color:var(--pomodoro)}
+  .timer-display.pomodoro-break{color:var(--success)}
   .timer-earnings{font-size:.85rem;color:var(--muted);margin-bottom:12px;min-height:1.2em}
   .timer-earnings.running{color:var(--success);font-weight:600}
+  .pomodoro-info{font-size:.8rem;color:var(--muted);margin-bottom:8px;min-height:1.2em}
+  .pomodoro-info .pomodoro-cycle{font-weight:600;color:var(--pomodoro)}
+  .pomodoro-info .pomodoro-type{font-weight:600}
+  .pomodoro-info .pomodoro-type.work{color:var(--pomodoro)}
+  .pomodoro-info .pomodoro-type.break{color:var(--success)}
+
+  /* Pomodoro progress bar */
+  .pomodoro-progress{height:4px;background:var(--border);border-radius:2px;margin-bottom:12px;overflow:hidden;display:none}
+  .pomodoro-progress.visible{display:block}
+  .pomodoro-progress .fill{height:100%;border-radius:2px;transition:width .3s linear}
+  .pomodoro-progress .fill.work{background:var(--pomodoro)}
+  .pomodoro-progress .fill.break{background:var(--success)}
 
   .btn{padding:10px 22px;border:none;border-radius:var(--radius-sm);font-size:.9rem;font-weight:600;cursor:pointer;transition:all .15s}
   .btn:hover{transform:translateY(-1px);opacity:.9}
@@ -98,6 +121,8 @@
   .btn-danger{background:var(--danger);color:#fff}
   .btn-success{background:var(--success);color:#fff}
   .btn-warning{background:var(--warning);color:#1a1a2e}
+  .btn-pomodoro{background:var(--pomodoro);color:#fff}
+  .btn-pomodoro:hover{opacity:.9;transform:translateY(-1px)}
   .btn-outline{background:transparent;border:2px solid var(--border);color:var(--text)}
   .btn-outline:hover{border-color:var(--primary);color:var(--primary)}
   .btn-sm{padding:6px 12px;font-size:.8rem}
@@ -227,6 +252,12 @@
     </div>
   </header>
 
+  <!-- Mode Toggle -->
+  <div class="mode-toggle">
+    <button class="mode-btn active" data-mode="free" onclick="setMode('free')">⏱ Free Timer</button>
+    <button class="mode-btn" data-mode="pomodoro" onclick="setMode('pomodoro')">🍅 Pomodoro</button>
+  </div>
+
   <!-- Client Presets -->
   <div class="presets" id="presets"></div>
 
@@ -251,6 +282,8 @@
       <datalist id="clientSuggestions"></datalist>
       <input class="rate-input" id="rateInput" type="number" min="0" step="1" placeholder="$/hr">
     </div>
+    <div class="pomodoro-info" id="pomodoroInfo"></div>
+    <div class="pomodoro-progress" id="pomodoroProgress"><div class="fill" id="pomodoroFill"></div></div>
     <div class="timer-display" id="timerDisplay">00:00:00</div>
     <div class="timer-earnings" id="timerEarnings"></div>
     <div class="timer-notes" id="timerNotes" style="display:none;margin-bottom:8px">
@@ -264,6 +297,8 @@
       <button class="btn btn-success" id="startBtn" onclick="startTimer()">▶ Start</button>
       <button class="btn btn-warning" id="pauseBtn" onclick="pauseTimer()" disabled>⏸ Pause</button>
       <button class="btn btn-primary" id="doneBtn" onclick="doneTimer()" disabled style="display:none">✅ Done</button>
+      <button class="btn btn-outline" id="skipBtn" onclick="skipBreak()" disabled style="display:none">⏭ Skip</button>
+      <button class="btn btn-outline" id="extendBtn" onclick="extendBreak()" disabled style="display:none">+5m</button>
       <button class="btn btn-danger" id="stopBtn" onclick="stopTimer()" disabled>✕ Cancel</button>
     </div>
     <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
@@ -284,9 +319,10 @@
 <div class="modal-overlay" id="tutorialModal">
   <div class="modal">
     <h2>📖 How to Use Client Clock</h2>
-    <div class="tutorial-step"><div class="tutorial-num">1</div><div><h4>Quick-Start or Manual</h4><p>Click a <strong>preset button</strong> above the timer, or type a client name + rate. Press <kbd>Enter</kbd> to start tracking.</p></div></div>
-    <div class="tutorial-step"><div class="tutorial-num">2</div><div><h4>Track Your Time</h4><p><strong>⏸ Pause</strong> for breaks, <strong>✅ Done</strong> to finish and save, <strong>✕ Cancel</strong> to end without logging billable time (session is still saved as "Cancelled" so no data is lost).</p></div></div>
-    <div class="tutorial-step"><div class="tutorial-num">3</div><div><h4>Review & Filter</h4><p>Click a client name to see their history. <strong>📊</strong> for weekly/monthly summaries. <strong>📥</strong> to backup.</p></div></div>
+    <div class="tutorial-step"><div class="tutorial-num">1</div><div><h4>Choose Your Mode</h4><p><strong>⏱ Free Timer</strong> — track as long as you want. <strong>🍅 Pomodoro</strong> — a time management technique where you work in focused 25-min sessions, take 5-min breaks, and after 4 sessions take a longer 15-min break. Great for staying productive without burning out. Toggle at the top.</p></div></div>
+    <div class="tutorial-step"><div class="tutorial-num">2</div><div><h4>Quick-Start or Manual</h4><p>Click a <strong>preset button</strong> above the timer, or type a client name + rate. Press <kbd>Enter</kbd> to start.</p></div></div>
+    <div class="tutorial-step"><div class="tutorial-num">3</div><div><h4>Track Your Time</h4><p><strong>⏸ Pause</strong> for breaks, <strong>✅ Done</strong> to finish and save, <strong>✕ Cancel</strong> to discard. In Pomodoro with auto-stop on, the timer ends automatically — just press Done to save and start your break.</p></div></div>
+    <div class="tutorial-step"><div class="tutorial-num">4</div><div><h4>Review & Filter</h4><p>Click a client name to see their history. <strong>📊</strong> for weekly/monthly summaries. <strong>📥</strong> to backup.</p></div></div>
     <div class="modal-actions"><button class="btn btn-primary btn-sm" onclick="closeTutorial()">Got it!</button></div>
   </div>
 </div>
@@ -329,6 +365,21 @@
     <input type="number" id="defaultRate" min="0" step="1">
     <label>Currency</label>
     <select id="currencySelect"><option value="$">$ (USD)</option><option value="₱">₱ (PHP)</option></select>
+
+    <h3 style="font-size:.9rem;margin:16px 0 8px;color:var(--text)">🍅 Pomodoro Timer</h3>
+    <label>Work Duration (minutes)</label>
+    <input type="number" id="pomodoroWork" min="1" max="120" step="1">
+    <label>Short Break (minutes)</label>
+    <input type="number" id="pomodoroBreak" min="1" max="30" step="1">
+    <label>Long Break (minutes)</label>
+    <input type="number" id="pomodoroLongBreak" min="1" max="60" step="1">
+    <label>Sessions Before Long Break</label>
+    <input type="number" id="pomodoroCycles" min="1" max="10" step="1">
+    <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer">
+      <input type="checkbox" id="pomodoroAutoStop" style="width:auto;margin-bottom:0">
+      Auto-stop when work session ends
+      <span style="font-weight:400;color:var(--muted);font-size:.75rem">(Off = timer keeps running, you click Stop)</span>
+    </label>
 
     <h3 style="font-size:.9rem;margin:16px 0 8px;color:var(--text)">🏃 Quick-Start Presets</h3>
     <div id="presetList"></div>
@@ -399,12 +450,12 @@
 // ============================================================
 const SK='client_clock_data',TK='client_clock_timer',WK='client_clock_warn',TUK='client_clock_tutorial';
 
-function dd(){return{sessions:[],clientRates:{},presets:[],settings:{defaultRate:25,currency:'$',darkMode:false}}}
+function dd(){return{sessions:[],clientRates:{},presets:[],settings:{defaultRate:25,currency:'$',darkMode:false,mode:'free',pomodoroWork:25,pomodoroBreak:5,pomodoroLongBreak:15,pomodoroCycles:4,pomodoroAutoStop:true}}}
 function ld(){try{const r=localStorage.getItem(SK);if(!r)return dd();const d=JSON.parse(r);return{sessions:d.sessions||[],clientRates:d.clientRates||{},presets:d.presets||[],settings:{...dd().settings,...(d.settings||{})}}}catch{return dd()}}
 let data=ld();
 function sv(){localStorage.setItem(SK,JSON.stringify(data))}
 function svt(){if(ts){const t={...ts};t._ts=Date.now();localStorage.setItem(TK,JSON.stringify(t))}else localStorage.removeItem(TK)}
-function ldt(){try{const r=localStorage.getItem(TK);if(!r)return null;const t=JSON.parse(r);if(t.running){const e=(Date.now()-t._ts)/1000;t.elapsed+=Math.max(0,e);t.startTime=Date.now()}return t}catch{return null}}
+function ldt(){try{const r=localStorage.getItem(TK);if(!r)return null;const t=JSON.parse(r);if(t.running){const e=(Date.now()-t._ts)/1000;t.elapsed+=Math.max(0,e);t.startTime=Date.now()}if(t.pomodoroEndAt){const left=t.pomodoroEndAt-Date.now();t.pomodoroLeft=Math.max(0,left)}return t}catch{return null}}
 
 // ============================================================
 // SOUND
@@ -461,6 +512,22 @@ function dismissUnfinished(){
 }
 
 // ============================================================
+// MODE
+// ============================================================
+let pomodoroCycleCount=0; // today's completed work cycles
+
+function setMode(m){
+  if(ts){showToast('Stop timer first to switch modes');return}
+  data.settings.mode=m;sv();
+  document.querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('active',b.dataset.mode===m));
+  document.getElementById('startBtn').className=m==='pomodoro'?'btn btn-pomodoro':'btn btn-success';
+  document.getElementById('startBtn').innerHTML=m==='pomodoro'?'🍅 Start':'▶ Start';
+  document.getElementById('pomodoroInfo').textContent=m==='pomodoro'?'🍅 Pomodoro mode — work in focused sessions':'';
+  document.getElementById('pomodoroProgress').classList.remove('visible');
+  updateButtons();
+}
+
+// ============================================================
 // PRESETS
 // ============================================================
 function renderPresets(){
@@ -489,67 +556,198 @@ function removePresetField(i){data.presets.splice(i,1);renderPresetEditor()}
 // ============================================================
 let ts=null;
 function fmt(s){const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),se=Math.floor(s%60);return`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(se).padStart(2,'0')}`}
+function fmtOverdue(s){const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),se=Math.floor(s%60);if(h>0)return`${h}h ${m}m ${se}s`;if(m>0)return`${m}m ${se}s`;return`${se}s`}
 function fmtShort(s){const h=Math.floor(s/3600),m=Math.floor((s%3600)/60);return h>0?`${h}h ${m}m`:`${m}m`}
 
+function getPomodoroDuration(){
+  // Count completed cycles today
+  const td=new Date();td.setHours(0,0,0,0);
+  const todaySessions=data.sessions.filter(s=>new Date(s.timestamp)>=td);
+  const workCycles=todaySessions.filter(s=>s.pomodoro).length;
+  const totalCycles=data.settings.pomodoroCycles||4;
+  const isLongBreak=workCycles>0&&workCycles%totalCycles===0;
+  return isLongBreak?(data.settings.pomodoroLongBreak||15)*60:(data.settings.pomodoroBreak||5)*60;
+}
+
 function updateDisplay(){
+  const m=data.settings.mode;
   if(!ts){
     document.title='Client Clock';
     document.getElementById('timerDisplay').textContent='00:00:00';
     document.getElementById('timerDisplay').className='timer-display';
     document.getElementById('timerEarnings').textContent='';
+    document.getElementById('pomodoroInfo').textContent=m==='pomodoro'?'🍅 Pomodoro mode — work in focused sessions':'';
+    document.getElementById('pomodoroProgress').classList.remove('visible');
     return
   }
   const now=Date.now();
-  const elapsed=ts.running?(now-ts.startTime)/1000+ts.elapsed:ts.elapsed;
-  const display=fmt(elapsed);
-  const cls='timer-display'+(ts.running?' running':' paused');
+  let elapsed,remaining,display,cls='timer-display';
+
+  if(m==='pomodoro'&&ts.pomodoroType){
+    remaining=Math.max(0,ts.pomodoroEndAt-now);
+    const total=ts.pomodoroTotalDur;
+    const pct=total>0?((total-remaining)/total)*100:0;
+    elapsed=(ts.pomodoroTotalDur||0)-remaining;
+
+    // Check if complete
+    if(remaining<=0&&ts.running){
+      if(ts.pomodoroType==='work'){
+        alarm();
+        if(data.settings.pomodoroAutoStop!==false){
+          // Auto-stop: log session, start break
+          ts.running=false;
+          const client=document.getElementById('clientInput').value.trim()||'Pomodoro Session';
+          const rate=parseFloat(document.getElementById('rateInput').value)||data.settings.defaultRate;
+          const durSec=Math.round(ts.pomodoroTotalDur/1000);
+          const autoNotes=document.getElementById('sessionNotes').value.trim()||'🍅 Pomodoro work session';
+          const session={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),client:client,start:ts.startTime,end:Date.now(),duration:durSec,rate:rate,notes:autoNotes,status:'completed',timestamp:new Date().toISOString(),pomodoro:true};
+          data.sessions.push(session);sv();
+          notify('🍅 Work complete!', `${client} — ${fmtShort(durSec)} logged`);
+          showToast(`🍅 Work complete! ${fmtShort(durSec)} logged for ${client}`);
+          const breakDur=data.settings.pomodoroBreak||5;
+          const longBreakDur=data.settings.pomodoroLongBreak||15;
+          const td=new Date();td.setHours(0,0,0,0);
+          const tsess=data.sessions.filter(s=>new Date(s.timestamp)>=td);
+          const cycles=tsess.filter(s=>s.pomodoro).length;
+          const totalCycles=data.settings.pomodoroCycles||4;
+          const isLong=cycles>0&&cycles%totalCycles===0;
+          const bm=isLong?longBreakDur:breakDur;
+          document.getElementById('timerNotes').style.display='none';document.getElementById('sessionNotes').value='';
+          ts={client:client,startTime:Date.now(),elapsed:0,running:true,mode:'pomodoro',pomodoroType:'break',pomodoroTotalDur:bm*60*1000,pomodoroEndAt:Date.now()+bm*60*1000};
+          svt();
+          setTimeout(()=>updateDisplay(),200);
+          return
+        } else {
+          // Manual mode: mark as overtime, keep running
+          ts.pomodoroOverdue=true;
+          ts.elapsed=(now-ts.startTime)/1000;
+          showToast('⏰ Time\'s up! Click Stop to end this session');
+        }
+      } else {
+        // Break ended
+        ts.running=false;
+        alarm();
+        notify('☕ Break over!', 'Ready for next work session?');
+        ts.pomodoroType='break_done';
+        svt();
+        updateDisplay();
+        updateButtons();
+        return
+      }
+    }
+
+    if(ts.pomodoroOverdue){
+      // Show overtime (counting up from when session ended)
+      const overtime=Math.ceil((now-ts.pomodoroEndAt)/1000);
+      display='+'+fmt(overtime);
+      cls+=' pomodoro-work';
+      // Keep progress bar at 100%
+      const bar=document.getElementById('pomodoroProgress');
+      bar.classList.add('visible');
+      const fill=document.getElementById('pomodoroFill');
+      fill.style.width='100%';fill.className='fill work';
+    } else {
+      display=fmt(Math.ceil(remaining/1000));
+      cls+=ts.pomodoroType==='work'?' pomodoro-work':' pomodoro-break';
+      // Progress bar
+      const bar=document.getElementById('pomodoroProgress');
+      bar.classList.add('visible');
+      const fill=document.getElementById('pomodoroFill');
+      fill.style.width=Math.min(100,pct)+'%';
+      fill.className='fill '+(ts.pomodoroType==='work'?'work':'break');
+    }
+  } else {
+    // Free mode or pomodoro without type set
+    elapsed=ts.running?(now-ts.startTime)/1000+ts.elapsed:ts.elapsed;
+    display=fmt(elapsed);
+    cls+=ts.running?' running':' paused';
+  }
 
   document.getElementById('timerDisplay').textContent=display;
   document.getElementById('timerDisplay').className=cls;
   document.title=display+' - Client Clock';
 
   // Running earnings
-  const hrs=elapsed/3600;
-  const rate=data.clientRates[ts.client]||data.settings.defaultRate;
-  const earned=hrs*rate;
-  const el=document.getElementById('timerEarnings');
-  if(ts.running){el.textContent=`💰 ${data.settings.currency}${earned.toFixed(2)} earned so far`;el.className='timer-earnings running'}
-  else if(!ts.running&&ts.elapsed>0){el.textContent=`💰 ${data.settings.currency}${earned.toFixed(2)} earned`;el.className='timer-earnings'}
-  else el.textContent='';
+  if(m!=='pomodoro'){
+    const hrs=elapsed/3600;
+    const rate=data.clientRates[ts.client]||data.settings.defaultRate;
+    const earned=hrs*rate;
+    const el=document.getElementById('timerEarnings');
+    if(ts.running){el.textContent=`💰 ${data.settings.currency}${earned.toFixed(2)} earned so far`;el.className='timer-earnings running'}
+    else if(!ts.running&&ts.elapsed>0){el.textContent=`💰 ${data.settings.currency}${earned.toFixed(2)} earned`;el.className='timer-earnings'}
+    else el.textContent='';
+  }
 
+  // Pomodoro info text
+  if(m==='pomodoro'&&ts.pomodoroType){
+    const td=new Date();td.setHours(0,0,0,0);
+    const todayWork=data.sessions.filter(s=>{const d=new Date(s.timestamp);return d>=td&&s.pomodoro}).length;
+    const totalCycles=data.settings.pomodoroCycles||4;
+    const rem=Math.max(0,Math.ceil((ts.pomodoroEndAt-Date.now())/1000));
+    const typeText=ts.pomodoroType==='work'?'Focus':'Break';
+    const overtimeText=ts.pomodoroOverdue?` · +${fmtOverdue((now-ts.pomodoroEndAt)/1000)} overtime`:``;
+    const cycleText=ts.pomodoroType==='work'?`Session ${todayWork+1}/${totalCycles}`:`Rest (${Math.ceil(rem/60)}m)`;
+    document.getElementById('pomodoroInfo').innerHTML=`🍅 <span class="pomodoro-type ${ts.pomodoroType}">${typeText}</span> · <span class="pomodoro-cycle">${cycleText}${overtimeText}</span>`;
+  }
   updateButtons();
 }
 
 function updateButtons(){
+  const m=data.settings.mode;
   const hasClient=!!document.getElementById('clientInput').value.trim();
   const timerActive=!!(ts&&(ts.running||(!ts.running&&ts.elapsed>0)));
-  document.getElementById('startBtn').disabled=!hasClient||(ts&&ts.running);
+  const isBreak=ts?.pomodoroType==='break';
+  document.getElementById('startBtn').disabled=m==='pomodoro'?(ts&&ts.running):(!hasClient||(ts&&ts.running));
   document.getElementById('pauseBtn').disabled=!ts?.running;
-  document.getElementById('doneBtn').style.display=timerActive?'inline-block':'none';
-  document.getElementById('doneBtn').disabled=!timerActive;
+  document.getElementById('doneBtn').style.display=(timerActive&&!isBreak)?'inline-block':'none';
+  document.getElementById('doneBtn').disabled=!timerActive||isBreak;
+  document.getElementById('skipBtn').style.display=isBreak?'inline-block':'none';
+  document.getElementById('skipBtn').disabled=!isBreak;
+  document.getElementById('extendBtn').style.display=isBreak?'inline-block':'none';
+  document.getElementById('extendBtn').disabled=!isBreak;
   document.getElementById('stopBtn').disabled=!ts;
 }
 
 function startTimer(){
   // Request notification permission on first use
   if("Notification" in window&&Notification.permission==='default'){Notification.requestPermission()}
+  const m=data.settings.mode;
   const client=document.getElementById('clientInput').value.trim();
   const rate=parseFloat(document.getElementById('rateInput').value)||data.settings.defaultRate;
 
+  if(m==='pomodoro'){
+    // Resume paused pomodoro
+    if(ts&&!ts.running&&ts.pomodoroType&&ts.pomodoroType!=='break_done'){
+      ts.running=true;ts.startTime=Date.now();
+      if(ts.pomodoroEndAt)ts.pomodoroEndAt=Date.now()+Math.max(0,ts.pomodoroEndAt-(ts.startTime-ts.elapsed*1000));
+      svt();updateDisplay();return
+    }
+    // Start new pomodoro
+    const workMin=data.settings.pomodoroWork||25;
+    const workMs=workMin*60*1000;
+    if(client){data.clientRates[client]=rate;sv()}
+    if(ts)stopTimer();
+    ts={client:client||'Pomodoro Session',startTime:Date.now(),elapsed:0,running:true,mode:'pomodoro',pomodoroType:'work',pomodoroTotalDur:workMs,pomodoroEndAt:Date.now()+workMs};
+    document.getElementById('timerNotes').style.display='block';document.getElementById('sessionNotes').value='';document.getElementById('sessionNotes').focus();
+    svt();updateDisplay();return
+  }
+
+  // Free mode
   if(!client){showToast('Enter a client name');return}
   data.clientRates[client]=rate;sv();
   if(ts&&!ts.running&&ts.client===client){ts.running=true;ts.startTime=Date.now()}
-  else{
-    if(ts)saveSession();
-    ts={client,startTime:Date.now(),elapsed:0,running:true};
-    document.getElementById('timerNotes').style.display='block';document.getElementById('sessionNotes').value='';document.getElementById('sessionNotes').focus()
-  }
+  else{if(ts)saveSession();ts={client,startTime:Date.now(),elapsed:0,running:true};document.getElementById('timerNotes').style.display='block';document.getElementById('sessionNotes').value='';document.getElementById('sessionNotes').focus()}
   svt();updateDisplay()
 }
 
 function pauseTimer(){
   if(!ts?.running)return;
-  ts.elapsed=(Date.now()-ts.startTime)/1000+ts.elapsed;
+  if(data.settings.mode==='pomodoro'&&ts.pomodoroEndAt){
+    const elapsed=ts.pomodoroTotalDur-Math.max(0,ts.pomodoroEndAt-Date.now());
+    ts.elapsed=elapsed;
+  } else {
+    ts.elapsed=(Date.now()-ts.startTime)/1000;
+  }
   ts.running=false;svt();updateDisplay()
 }
 
@@ -558,7 +756,50 @@ function doneTimer(){
   const now=Date.now(),elapsedSec=ts.running?(now-ts.startTime)/1000:ts.elapsed;
   if(elapsedSec<5){showToast('Too short (<5s)');return}
 
-  const client=document.getElementById('clientInput').value.trim()||'Session';
+  // If it's a break, end the break
+  if(ts.pomodoroType==='break'){
+    ts.running=false;alarm();
+    notify('✅ Break ended!', 'Ready for next session?');
+    showToast('☕ Break ended! Ready for next work session?');
+    document.getElementById('pomodoroInfo').textContent='☕ Break done — start next work session when ready';
+    document.getElementById('pomodoroProgress').classList.remove('visible');
+    document.getElementById('timerDisplay').className='timer-display paused';
+    document.getElementById('timerNotes').style.display='none';document.getElementById('sessionNotes').value='';
+    updateButtons();
+    svt();
+    return
+  }
+
+  const isPomodoro=data.settings.mode==='pomodoro'&&ts.pomodoroType;
+  const client=document.getElementById('clientInput').value.trim()||(isPomodoro?'Pomodoro Session':'');
+
+  let notes='';
+  if(isPomodoro){
+    const overtime=ts.pomodoroOverdue?Math.round((now-ts.pomodoroEndAt)/1000):0;
+    const baseDur=Math.round((ts.pomodoroTotalDur||0)/1000);
+    const totalDur=baseDur+overtime;
+    const pNotes=document.getElementById('sessionNotes').value.trim();
+    notes=pNotes?pNotes:(overtime>0?'🍅 Pomodoro (+'+fmt(overtime)+' overtime)':'🍅 Pomodoro work session');
+    // Log the work session
+    const session={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),client:client,start:ts.startTime,end:now,duration:Math.round(elapsedSec),rate:data.clientRates[client]||data.settings.defaultRate,notes:notes,status:'completed',timestamp:new Date().toISOString(),pomodoro:true};
+    data.sessions.push(session);sv();
+    showToast(`🍅 Done! ${fmtShort(elapsedSec)} ${overtime>0?'(incl. +'+fmt(overtime)+' overtime)':''}for ${client}`);
+    // Auto-start break
+    const breakDur=data.settings.pomodoroBreak||5;
+    const longBreakDur=data.settings.pomodoroLongBreak||15;
+    const td=new Date();td.setHours(0,0,0,0);
+    const tsess=data.sessions.filter(s=>new Date(s.timestamp)>=td);
+    const cycles=tsess.filter(s=>s.pomodoro).length;
+    const totalCycles=data.settings.pomodoroCycles||4;
+    const isLong=cycles>0&&cycles%totalCycles===0;
+    const bm=isLong?longBreakDur:breakDur;
+    document.getElementById('timerNotes').style.display='none';document.getElementById('sessionNotes').value='';
+    ts={client:client,startTime:Date.now(),elapsed:0,running:true,mode:'pomodoro',pomodoroType:'break',pomodoroTotalDur:bm*60*1000,pomodoroEndAt:Date.now()+bm*60*1000};
+    svt();updateDisplay();updateButtons();
+    return
+  }
+
+  // Free mode
   const notesVal=document.getElementById('sessionNotes').value.trim();
   const session={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),client:client,start:ts.running?ts.startTime:(ts.startTime-ts.elapsed*1000),end:now,duration:Math.round(elapsedSec),rate:data.clientRates[client]||data.settings.defaultRate,notes:notesVal,status:'completed',timestamp:new Date().toISOString()};
   data.sessions.push(session);sv();render();beep();
@@ -567,8 +808,30 @@ function doneTimer(){
   document.getElementById('timerNotes').style.display='none';document.getElementById('sessionNotes').value='';
   ts=null;document.getElementById('timerDisplay').textContent='00:00:00';document.getElementById('timerDisplay').className='timer-display';
   document.getElementById('timerEarnings').textContent='';
+  document.getElementById('pomodoroInfo').textContent='';
+  document.getElementById('pomodoroProgress').classList.remove('visible');
   updateButtons();document.getElementById('clientInput').value='';document.getElementById('rateInput').value='';
   svt()
+}
+
+function skipBreak(){
+  if(!ts||ts.pomodoroType!=='break')return;
+  alarm();
+  showToast('☕ Break skipped! Ready for next work session?');
+  document.getElementById('pomodoroInfo').textContent='☕ Break skipped — start next work session when ready';
+  document.getElementById('pomodoroProgress').classList.remove('visible');
+  clearTimer();
+  updateButtons()
+}
+
+function extendBreak(){
+  if(!ts||ts.pomodoroType!=='break')return;
+  const extra=5*60*1000;
+  ts.pomodoroTotalDur=((ts.pomodoroTotalDur||0)+extra);
+  ts.pomodoroEndAt=(ts.pomodoroEndAt||Date.now())+extra;
+  if(!ts.running){ts.startTime=Date.now();ts.running=true}
+  showToast('+5m added to break');
+  svt();updateDisplay();
 }
 
 function stopTimer(){
@@ -576,9 +839,10 @@ function stopTimer(){
   // Save as cancelled instead of discarding
   const now=Date.now(),elapsedSec=ts.running?(now-ts.startTime)/1000:ts.elapsed;
   if(elapsedSec>=5){
-    const client=document.getElementById('clientInput').value.trim()||'Session';
+    const isPomodoro=data.settings.mode==='pomodoro'&&ts.pomodoroType;
+    const client=document.getElementById('clientInput').value.trim()||(isPomodoro?'Pomodoro Session':'Session');
     const cancelNotes=document.getElementById('sessionNotes').value.trim();
-    const session={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),client:client,start:ts.running?ts.startTime:(ts.startTime-ts.elapsed*1000),end:now,duration:Math.round(elapsedSec),rate:data.clientRates[client]||data.settings.defaultRate,notes:cancelNotes,timestamp:new Date().toISOString(),status:'cancelled'};
+    const session={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),client:client,start:ts.running?ts.startTime:(ts.startTime-ts.elapsed*1000),end:now,duration:Math.round(elapsedSec),rate:data.clientRates[client]||data.settings.defaultRate,notes:cancelNotes,timestamp:new Date().toISOString(),status:'cancelled',pomodoro:isPomodoro||undefined};
     data.sessions.push(session);sv();render();
   }
   clearTimer();showToast('Cancelled — session saved as cancelled')
@@ -587,6 +851,8 @@ function stopTimer(){
 function clearTimer(){
   ts=null;document.getElementById('timerDisplay').textContent='00:00:00';document.getElementById('timerDisplay').className='timer-display';
   document.getElementById('timerEarnings').textContent='';
+  document.getElementById('pomodoroInfo').textContent=data.settings.mode==='pomodoro'?'🍅 Pomodoro mode — work in focused sessions':'';
+  document.getElementById('pomodoroProgress').classList.remove('visible');
   document.getElementById('timerNotes').style.display='none';document.getElementById('sessionNotes').value='';
   updateButtons();document.getElementById('clientInput').value='';document.getElementById('rateInput').value='';
   svt()
@@ -627,8 +893,9 @@ function renderSessions(){
   c.innerHTML=l.map(s=>{
     const hrs=s.duration/3600,earn=hrs*s.rate,st=new Date(s.start).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
     const sd=new Date(s.timestamp).toLocaleDateString([],{month:'short',day:'numeric'});
+    const tag=s.pomodoro?'🍅 ':'🔵 ';
     const statusBadge=s.status==='cancelled'?' <span style="color:var(--danger);font-size:.7rem">✕ Cancelled</span>':'';
-    return `<div class="session-card" style="${s.status==='cancelled'?'opacity:.55':''}"><div class="session-info" onclick="filterByClient('${esc(s.client)}')"><div class="client"><span class="client-link">🔵 ${esc(s.client)}</span> <span class="rate-badge">${data.settings.currency}${s.rate}/hr</span></div><div class="meta">${sd} ${st} · ${fmtShort(s.duration)} · ${data.settings.currency}${earn.toFixed(2)}${statusBadge}</div>${s.notes?`<div class="note-preview">📝 ${esc(s.notes)}</div>`:''}</div><div class="session-actions"><button class="btn btn-outline btn-xs" onclick="event.stopPropagation();editSession('${s.id}')\">✏️</button><button class="btn btn-outline btn-xs" onclick="event.stopPropagation();deleteSession('${s.id}')\">🗑</button></div></div>`
+    return `<div class="session-card" style="${s.status==='cancelled'?'opacity:.55':''}"><div class="session-info" onclick="filterByClient('${esc(s.client)}')"><div class="client"><span class="client-link">${tag}${esc(s.client)}</span> <span class="rate-badge">${data.settings.currency}${s.rate}/hr</span></div><div class="meta">${sd} ${st} · ${fmtShort(s.duration)} · ${data.settings.currency}${earn.toFixed(2)}${s.pomodoro?' · 🍅':''}${statusBadge}</div>${s.notes?`<div class="note-preview">📝 ${esc(s.notes)}</div>`:''}</div><div class="session-actions"><button class="btn btn-outline btn-xs" onclick="event.stopPropagation();editSession('${s.id}')\">✏️</button><button class="btn btn-outline btn-xs" onclick="event.stopPropagation();deleteSession('${s.id}')\">🗑</button></div></div>`
   }).join('');
 }
 
@@ -651,6 +918,11 @@ function toggleModal(id){
   if(id==='settingsModal'&&el.classList.contains('active')){
     document.getElementById('defaultRate').value=data.settings.defaultRate;
     document.getElementById('currencySelect').value=data.settings.currency;
+    document.getElementById('pomodoroWork').value=data.settings.pomodoroWork||25;
+    document.getElementById('pomodoroBreak').value=data.settings.pomodoroBreak||5;
+    document.getElementById('pomodoroLongBreak').value=data.settings.pomodoroLongBreak||15;
+    document.getElementById('pomodoroCycles').value=data.settings.pomodoroCycles||4;
+    document.getElementById('pomodoroAutoStop').checked=data.settings.pomodoroAutoStop!==false;
     renderPresetEditor()
   }
   if(id==='summaryModal'&&el.classList.contains('active'))renderSummary()
@@ -659,6 +931,11 @@ function saveSettings(){
   const rate=parseFloat(document.getElementById('defaultRate').value),cur=document.getElementById('currencySelect').value;
   if(isNaN(rate)||rate<0){showToast('Enter valid rate');return}
   data.settings.defaultRate=rate;data.settings.currency=cur;
+  data.settings.pomodoroWork=parseInt(document.getElementById('pomodoroWork').value)||25;
+  data.settings.pomodoroBreak=parseInt(document.getElementById('pomodoroBreak').value)||5;
+  data.settings.pomodoroLongBreak=parseInt(document.getElementById('pomodoroLongBreak').value)||15;
+  data.settings.pomodoroCycles=parseInt(document.getElementById('pomodoroCycles').value)||4;
+  data.settings.pomodoroAutoStop=document.getElementById('pomodoroAutoStop').checked;
   const ps=data.presets||[];
   for(let i=0;i<ps.length;i++){const n=document.getElementById(`pe_n_${i}`)?.value?.trim();const r=parseFloat(document.getElementById(`pe_r_${i}`)?.value);if(n&&!isNaN(r)&&r>=0){ps[i].name=n;ps[i].rate=r}}
   data.presets=ps.filter(p=>p.name);sv();render();toggleModal('settingsModal');showToast('Settings saved')
@@ -692,7 +969,7 @@ function renderSummary(){
 // ============================================================
 // EXPORT
 // ============================================================
-function exportAllCSV(){if(!data.sessions.length){showToast('No data');return}let c='Date,Client,Duration (min),Duration (hrs),Rate,Earnings,Notes,Status\n';data.sessions.sort((a,b)=>a.timestamp.localeCompare(b.timestamp)).forEach(s=>{const d=new Date(s.timestamp).toLocaleDateString();c+=`"${d}","${s.client}",${Math.round(s.duration/60)},${(s.duration/3600).toFixed(2)},${s.rate},${((s.duration/3600)*s.rate).toFixed(2)},"${(s.notes||'').replace(/"/g,'""')}","${s.status||'completed'}"\n`});dl(c,'client-clock-export.csv','text/csv');showToast('CSV downloaded')}
+function exportAllCSV(){if(!data.sessions.length){showToast('No data');return}let c='Date,Client,Duration (min),Duration (hrs),Rate,Earnings,Notes,Pomodoro,Status\n';data.sessions.sort((a,b)=>a.timestamp.localeCompare(b.timestamp)).forEach(s=>{const d=new Date(s.timestamp).toLocaleDateString();c+=`"${d}","${s.client}",${Math.round(s.duration/60)},${(s.duration/3600).toFixed(2)},${s.rate},${((s.duration/3600)*s.rate).toFixed(2)},"${(s.notes||'').replace(/"/g,'""')}","${s.pomodoro?'Yes':''}","${s.status||'completed'}"\n`});dl(c,'client-clock-export.csv','text/csv');showToast('CSV downloaded')}
 function exportJSON(){dl(JSON.stringify(data,null,2),'client-clock-backup.json','application/json');showToast('Backup downloaded')}
 function importJSON(){document.getElementById('importFile').click()}
 function handleImport(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const imp=JSON.parse(ev.target.result);if(!imp.sessions){showToast('Invalid backup');return}if(confirm(`Merge ${imp.sessions.length} sessions? (Cancel to replace)`)){data.sessions=[...data.sessions,...imp.sessions];data.clientRates={...data.clientRates,...(imp.clientRates||{})};data.presets=[...data.presets,...(imp.presets||[])];if(imp.settings)data.settings={...data.settings,...imp.settings}}else data=imp;sv();render();showToast(`Imported ${imp.sessions.length} sessions`)}catch{showToast('Error reading file')}};r.readAsText(f);e.target.value=''}
@@ -721,11 +998,15 @@ setInterval(()=>{if(ts?.running){updateDisplay();svt()}},500);
 applyDark();if(localStorage.getItem(WK))document.getElementById('warningBanner').classList.add('hidden');
 if(!localStorage.getItem(TUK))showTutorial();
 
+// Set initial mode
+setMode(data.settings.mode||'free');
+
 // Restore timer
 const s=ldt();
 if(s){
   ts=s;
-  const hasElapsed=ts.elapsed>5;
+  // Check if there's meaningful elapsed time to restore
+  const hasElapsed=ts.elapsed>5||(ts.pomodoroType&&ts.pomodoroEndAt);
   if(hasElapsed&&!ts.running){
     showUnfinishedBanner(ts)
   } else {

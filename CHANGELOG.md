@@ -4,21 +4,31 @@ All notable changes to Client Clock, tracked from initial build.
 
 ---
 
+## v2.0.0 — May 23, 2026
+
+### Removed
+- **Pomodoro timer removed** — app is now Free Timer only. Laser-focused on time tracking for PH freelancers. Archived copy saved at `archive/client-clock-v1.2.0-with-pomodoro.html` for future reference
+- Removed mode toggle, pomodoro progress bar, pomodoro info text, skip/extend break buttons
+- Removed all pomodoro settings (work duration, break duration, long break, cycles, auto-stop)
+- Removed `setMode()`, `skipBreak()`, `extendBreak()`, `getPomodoroDuration()` functions
+- Removed ~25% of JS logic and CSS. File size down from 63KB → 47KB
+
+### Changed
+- Timer UI simplified: no mode toggle, just client input + rate + start/pause/done/cancel
+- Tutorial updated to reflect Free Timer only
+
 ## v1.2.0 — May 23, 2026
 
 ### Added
 - **Tab title timer** — browser tab now shows remaining time (`25:00 - Client Clock`) so you know time left even when minimized
-- **Desktop notifications** — requested on first Start click. Fires system `Notification` popups for work complete, break over, and break ended. Works even when tab is in the background
+- **Desktop notifications** — requested on first Start click. Fires system `Notification` popups for timer events. Works even when tab is in the background
 - **Unfinished session recovery** — if you close the tab mid-session, a yellow banner appears on reload: "Unfinished session for Client A (12m) — started at 2:34 PM". Resume restarts the timer, Cancel saves as cancelled, ✖ dismisses
-- **Live notes input** — a text field appears under the timer when you start: "What are you working on?". Notes are saved to the session on Done, Cancel, or Pomodoro auto-stop. Field hides automatically when timer stops
+- **Live notes input** — a text field appears under the timer when you start: "What are you working on?". Notes are saved to the session on Done, Cancel, or stop. Field hides automatically when timer stops
 
 ### Changed
 - `stopTimer()` now reads the live notes field and saves it to cancelled sessions
-- `doneTimer()` (free mode) and Pomodoro auto-stop now capture notes from the live input
+- `doneTimer()` now captures notes from the live input
 - `clearTimer()` hides the notes field and clears the input
-
-### Fixed
-- `skipBreak()` now calls `clearTimer()` instead of manually nulling `ts` (ensures notes field cleanup)
 
 ---
 
