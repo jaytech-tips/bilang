@@ -723,7 +723,7 @@ function generateInvoice(){
 
 function getInvoiceHTML(tmpl,v){
   const t=(s)=>esc(s);
-  const h=s=>s;
+  const h=(s,...v)=>s.reduce((a,c,i)=>a+c+(v[i]||''),'');
   const templates={
     professional: h`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invoice - ${t(v.client)}</title>
 <style>@page{margin:20mm 15mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Helvetica Neue',Arial,sans-serif;color:#222;font-size:11pt;line-height:1.5;padding:40px;max-width:800px;margin:0 auto}
@@ -739,7 +739,7 @@ table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:10pt}th{t
 <div class="totals"><div class="row"><span>Total Hours</span><span>${fmtDec(v.totalSec)}</span></div><div class="row total"><span>Total Due</span><span>${v.cur}${v.totalAmt.toFixed(2)}</span></div></div>
 <div class="footer"><p>Thank you for your business!</p><p>${v.dueText}</p></div>
 <div class="no-print" style="text-align:center;margin-top:40px"><button onclick="window.print()" style="padding:10px 30px;background:#4361ee;color:#fff;border:none;border-radius:6px;font-size:11pt;cursor:pointer">📄 Save as PDF</button></div>
-<script>setTimeout(()=>window.print(),300)<\\/script></body></html>`,
+<script>setTimeout(()=>window.print(),300)<\/script></body></html>`
 
     minimal: h`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invoice - ${t(v.client)}</title>
 <style>@page{margin:22mm 18mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Helvetica Neue',Arial,sans-serif;color:#333;font-size:10.5pt;line-height:1.6;padding:40px;max-width:800px;margin:0 auto}
@@ -755,7 +755,7 @@ table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:9.5pt}th{
 <div class="totals"><div class="row"><span>Total Hours</span><span>${fmtDec(v.totalSec)}</span></div><div class="row total"><span>Total Due</span><span>${v.cur}${v.totalAmt.toFixed(2)}</span></div></div>
 <div class="footer"><p>Thank you for your business.</p></div>
 <div class="no-print" style="text-align:center;margin-top:40px"><button onclick="window.print()" style="padding:10px 30px;background:#4361ee;color:#fff;border:none;border-radius:6px;font-size:11pt;cursor:pointer">📄 Save as PDF</button></div>
-<script>setTimeout(()=>window.print(),300)<\\/script></body></html>`,
+<script>setTimeout(()=>window.print(),300)<\/script></body></html>`
 
     elegant: h`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invoice - ${t(v.client)}</title>
 <style>@page{margin:20mm 15mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Georgia,'Times New Roman',serif;color:#2a2a2a;font-size:11pt;line-height:1.6;padding:40px;max-width:800px;margin:0 auto;background:#fefcf8}
@@ -771,7 +771,7 @@ table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:10pt}th{t
 <div class="totals"><div class="row"><span>Total Hours</span><span>${fmtDec(v.totalSec)}</span></div><div class="row total"><span>Total Due</span><span>${v.cur}${v.totalAmt.toFixed(2)}</span></div></div>
 <div class="footer"><p>Thank you for your business.</p></div>
 <div class="no-print" style="text-align:center;margin-top:40px"><button onclick="window.print()" style="padding:10px 30px;background:#8b5a2b;color:#fff;border:none;border-radius:6px;font-size:11pt;cursor:pointer">📄 Save as PDF</button></div>
-<script>setTimeout(()=>window.print(),300)<\\/script></body></html>`,
+<script>setTimeout(()=>window.print(),300)<\/script></body></html>`
 
     modern: (s,c)=>modernTmpl('#1a2332','#8899aa','#556677','#ccddee','#fafbfc','#1a2332','#e0e4e8','#eef0f2','#1a2332','#e0e4e8')(s,c),
     'modern-teal': (s,c)=>modernTmpl('#0d4f4f','#7abebe','#5a9e9e','#d0ecec','#f7fbfb','#0d4f4f','#c8e0e0','#e6f0f0','#0d4f4f','#c8e0e0')(s,c),
@@ -792,7 +792,7 @@ td{padding:10px 8px;border-bottom:1px solid #e8eaed;color:#444}td:last-child{tex
 <div class="totals"><div class="row"><span>Total Hours</span><span>${fmtDec(v.totalSec)}</span></div><div class="row total"><span>Total Due</span><span>${v.cur}${v.totalAmt.toFixed(2)}</span></div></div>
 <div class="footer"><span>${t(v.bizName)}</span><span>${v.dueText}</span><span>Thank you</span></div>
 <div class="no-print" style="text-align:center;margin-top:40px"><button onclick="window.print()" style="padding:10px 30px;background:#2c3e50;color:#fff;border:none;border-radius:6px;font-size:11pt;cursor:pointer">📄 Save as PDF</button></div>
-<script>setTimeout(()=>window.print(),300)<\\/script></body></html>`
+<script>setTimeout(()=>window.print(),300)<\/script></body></html>`
   };
 
   function modernTmpl(sBg,sSub,sLbl,sVal,mBg,aClr,bdClr,rowBg,tClr,tBrd){
@@ -808,7 +808,7 @@ table{width:100%;border-collapse:collapse;margin-bottom:24px;font-size:9.5pt}th{
 <table><thead><tr><th style="width:70px">Date</th><th>Description</th><th style="width:60px;text-align:center">Hours</th><th style="width:70px;text-align:right">Rate</th><th style="width:80px;text-align:right">Amount</th></tr></thead><tbody>${s.rows}</tbody></table>
 <div class="totals"><div class="row"><span>Total Hours</span><span>${fmtDec(s.totalSec)}</span></div><div class="row total"><span>Total Due</span><span>${s.cur}${s.totalAmt.toFixed(2)}</span></div></div></div></div>
 <div class="no-print" style="text-align:center;margin-top:20px"><button onclick="window.print()" style="padding:10px 30px;background:${aClr};color:#fff;border:none;border-radius:6px;font-size:11pt;cursor:pointer;margin-bottom:20px">📄 Save as PDF</button></div>
-<script>setTimeout(()=>window.print(),300)<\\/script></body></html>`;
+<script>setTimeout(()=>window.print(),300)<\/script></body></html>`
   }
 
   const fn=templates[tmpl]||templates.professional;
