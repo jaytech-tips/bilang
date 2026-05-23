@@ -4,6 +4,18 @@ All notable changes to Bilang (formerly Client Clock), tracked from initial buil
 
 ---
 
+## v2.3.0 — May 23, 2026
+
+### Added
+- **📄 Invoice Generator** — new "📄" button in header opens an invoice modal. Choose client, date range, and template (Professional). Generates a print-ready invoice in a new tab with: business name, client info, session breakdown, hours, rate, and total amount due. Auto-opens print dialog for Save as PDF
+- **🧾 Invoice settings** — Settings modal now has fields for Business Name and Email, used on invoices
+- **`fmtDec()` helper** — formats duration as decimal hours (e.g. 2.50h) for invoices
+
+### Changed
+- Settings modal layout: Invoice Details section added above presets
+
+---
+
 ## v2.2.0 — May 23, 2026
 
 ### Fixed
