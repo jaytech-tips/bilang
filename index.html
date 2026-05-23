@@ -8,961 +8,1171 @@
 <meta property="og:description" content="Free offline time tracker + invoice generator. No signup, no installation, no paid tools. Start tracking your billable hours today.">
 <meta property="og:url" content="https://jaytech-tips.github.io/bilang/">
 <meta property="og:type" content="website">
-<meta property="og:image" content="https://jaytech-tips.github.io/bilang/post-assets/og-preview.jpg">
 <meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #f8f9fc; --card: #fff; --text: #1a1a2e; --muted: #6c757d;
-    --muted-bg: #e9ecef; --primary: #4361ee; --primary-hover: #3651d4;
-    --danger: #ef476f; --success: #06d6a0; --warning: #ffd166;
-    --border: #e2e8f0; --radius: 12px; --radius-sm: 8px;
-    --shadow: 0 1px 3px rgba(0,0,0,0.06); --overlay: rgba(0,0,0,0.4);
-    --input-bg: #fff; --hover-bg: #f1f3f5;
-    --warn-bg: #fff8e1; --warn-border: #ffe082; --warn-text: #735f00;
-  }
-  .dark {
-    --bg: #121826; --card: #1e2433; --text: #e8e8f0; --muted: #8888aa;
-    --muted-bg: #2a3040; --border: #2a3040; --shadow: 0 1px 3px rgba(0,0,0,0.2);
-    --overlay: rgba(0,0,0,0.6); --input-bg: #2a3040; --hover-bg: #2a3040;
-    --warn-bg: #2a2810; --warn-border: #554a10; --warn-text: #d4b84a;
-  }
-  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  body {
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-    background:var(--bg);color:var(--text);padding:16px;min-height:100vh;line-height:1.5;
-    transition:background .2s,color .2s;
-  }
-  .container{max-width:800px;margin:0 auto}
+/* Hallmark · pre-emit critique: P4 H5 E5 S4 R5 V4
+ * Hallmark · genre: modern-minimal · macrostructure: Marquee Hero
+ * theme: Quiet · enrichment: none · nav: N5 · footer: Ft2
+ *
+ * Theme toggle: :root = light (canonical Quiet). .dark = cool dark.
+ */
 
-  .warning-banner{display:flex;align-items:center;gap:10px;background:var(--warn-bg);border:1px solid var(--warn-border);color:var(--warn-text);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px;font-size:.8rem;line-height:1.4}
-  .warning-banner .warn-icon{font-size:1.1rem;flex-shrink:0}
-  .warning-banner .warn-text{flex:1}
-  .warning-banner .warn-dismiss{background:none;border:none;cursor:pointer;color:var(--warn-text);font-size:1.1rem;padding:2px;opacity:.6}
-  .warning-banner .warn-dismiss:hover{opacity:1}
-  .warning-banner.hidden{display:none}
+:root {
+  --font-display: "Geist", system-ui, sans-serif;
+  --font-body:    "Geist", system-ui, sans-serif;
+  --font-mono:    "Geist Mono", ui-monospace, monospace;
 
-  .unfinished-banner{background:var(--warn-bg);border:2px solid var(--warn-border);border-radius:var(--radius);padding:12px 16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
-  .unfinished-banner.hidden{display:none}
-  .unfinished-content{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-  .unfinished-icon{font-size:1.3rem;flex-shrink:0}
-  .unfinished-text{flex:1;font-size:.85rem;line-height:1.4;color:var(--warn-text);min-width:200px}
-  .unfinished-actions{display:flex;gap:6px;flex-shrink:0}
-  .unfinished-actions .btn{font-size:.75rem;padding:5px 12px}
+  /* Quiet — monochrome, light, modern-minimal */
+  --color-paper:    oklch(100% 0 0);
+  --color-paper-2:  oklch(97.5% 0 0);
+  --color-rule:     oklch(91% 0 0);
+  --color-neutral:  oklch(60% 0 0);
+  --color-muted:    oklch(45% 0 0);
+  --color-ink:      oklch(18% 0 0);
+  --color-accent:   oklch(30% 0 0);
+  --color-accent-dim: oklch(40% 0 0);
+  --color-focus:    oklch(50% 0.12 240);
+  --color-success:  oklch(58% 0.14 155);
+  --color-danger:   oklch(53% 0.17 28);
+  --color-warning:  oklch(76% 0.13 85);
 
-  header{display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid var(--border);margin-bottom:16px}
-  .header-left{display:flex;align-items:center;gap:10px}
-  .header-left .clock-icon{width:32px;height:32px;border:2px solid var(--primary);border-radius:50%;position:relative;flex-shrink:0}
-  .header-left .clock-icon::before{content:'';position:absolute;top:50%;left:50%;width:10px;height:10px;background:var(--primary);border-radius:50%;transform:translate(-50%,-50%)}
-  .header-left .clock-icon .hand{position:absolute;bottom:50%;left:50%;background:var(--primary);border-radius:2px;transform-origin:bottom center}
-  .header-left h1{font-size:1.25rem;font-weight:700}
-  .header-left h1 small{font-size:.65rem;font-weight:400;color:var(--muted);display:block}
-  .header-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-  .btn-tutorial{background:var(--primary);color:#fff;border:none;border-radius:var(--radius-sm);padding:6px 12px;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
-  .btn-tutorial:hover{background:var(--primary-hover);transform:translateY(-1px)}
+  --space-3xs: 4px;  --space-2xs: 8px;  --space-xs: 12px;
+  --space-sm:  16px; --space-md:  20px; --space-lg:  28px;
+  --space-xl:  40px; --space-2xl: 56px; --space-3xl: 80px;
 
-  .presets{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;justify-content:center}
-  .preset-btn{padding:5px 14px;border:1px solid var(--border);border-radius:20px;background:var(--card);color:var(--text);font-size:.78rem;font-weight:500;cursor:pointer;transition:all .15s;box-shadow:var(--shadow)}
-  .preset-btn:hover{border-color:var(--primary);color:var(--primary);background:var(--hover-bg);transform:translateY(-1px)}
-  .preset-btn .preset-rate{color:var(--muted);font-size:.7rem;font-weight:400}
-  .preset-add-btn{border-style:dashed;opacity:.7}
-  .preset-add-btn:hover{opacity:1;border-color:var(--success);color:var(--success)}
+  --text-xs:   0.72rem;  --text-sm:   0.82rem;
+  --text-base: 0.92rem;  --text-lg:   1.1rem;
+  --text-xl:   1.35rem;  --text-2xl:  1.75rem;
+  --text-3xl:  2.25rem;
+  --text-display:  clamp(2.75rem, 6vw + 0.5rem, 5.5rem);
+  --text-display-s: clamp(1.5rem, 3.5vw, 2.75rem);
 
-  .filter-bar{display:none;align-items:center;gap:8px;padding:8px 12px;background:var(--card);border:1px solid var(--primary);border-radius:var(--radius-sm);margin-bottom:10px;font-size:.85rem;box-shadow:var(--shadow)}
-  .filter-bar.visible{display:flex}
-  .filter-bar .client-name{font-weight:600;color:var(--primary)}
-  .filter-bar .clear-filter{background:none;border:none;cursor:pointer;color:var(--danger);font-size:.8rem;font-weight:600;margin-left:auto}
+  --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in:     cubic-bezier(0.4, 0, 0.68, 0.06);
+  --dur-fast:    100ms;
+  --dur-short:   150ms;
+  --dur-medium:  250ms;
 
-  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
-  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center;box-shadow:var(--shadow)}
-  .stat-card .value{font-size:1.5rem;font-weight:700;color:var(--primary)}
-  .stat-card .label{font-size:.7rem;color:var(--muted);margin-top:2px}
+  --radius-sm:  8px;
+  --radius:     12px;
+  --radius-pill: 9999px;
+}
 
-  .timer-section{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center;margin-bottom:14px;box-shadow:var(--shadow)}
-  .timer-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:12px}
-  .timer-row input,.timer-row select{padding:10px 14px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:.95rem;outline:none;background:var(--input-bg);color:var(--text);transition:border .2s,background .2s,color .2s}
-  .timer-row input:focus{border-color:var(--primary)}
-  .timer-row .client-input{width:220px}
-  .timer-row .rate-input{width:100px;text-align:center}
-  .timer-display{font-size:3rem;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:2px;margin-bottom:4px;transition:color .2s}
-  .timer-display.running{color:var(--success)}
-  .timer-display.paused{color:var(--warning)}
-  .timer-earnings{font-size:.85rem;color:var(--muted);margin-bottom:12px;min-height:1.2em}
-  .timer-earnings.running{color:var(--success);font-weight:600}
+.dark {
+  --color-paper:    oklch(14% 0.006 240);
+  --color-paper-2:  oklch(18% 0.008 240);
+  --color-rule:     oklch(26% 0.008 240);
+  --color-neutral:  oklch(56% 0.006 240);
+  --color-muted:    oklch(68% 0.006 240);
+  --color-ink:      oklch(94% 0.005 240);
+  --color-accent:   oklch(90% 0 0);
+  --color-accent-dim: oklch(75% 0 0);
+  --color-focus:    oklch(65% 0.14 240);
+  --color-success:  oklch(68% 0.12 155);
+  --color-danger:   oklch(63% 0.15 28);
+  --color-warning:  oklch(80% 0.10 85);
+}
 
-  .btn{padding:10px 22px;border:none;border-radius:var(--radius-sm);font-size:.9rem;font-weight:600;cursor:pointer;transition:all .15s}
-  .btn:hover{transform:translateY(-1px);opacity:.9}
-  .btn:active{transform:translateY(0)}
-  .btn-primary{background:var(--primary);color:#fff}
-  .btn-primary:hover{background:var(--primary-hover)}
-  .btn-danger{background:var(--danger);color:#fff}
-  .btn-success{background:var(--success);color:#fff}
-  .btn-warning{background:var(--warning);color:#1a1a2e}
-  .btn-outline{background:transparent;border:2px solid var(--border);color:var(--text)}
-  .btn-outline:hover{border-color:var(--primary);color:var(--primary)}
-  .btn-sm{padding:6px 12px;font-size:.8rem}
-  .btn-xs{padding:4px 8px;font-size:.7rem}
-  .btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
-  .icon-btn{background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;cursor:pointer;color:var(--muted);font-size:1.1rem;transition:all .15s;line-height:1}
-  .icon-btn:hover{background:var(--hover-bg);color:var(--text)}
+/* ---- Reset & base ---- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { overflow-x: clip; }
+body {
+  overflow-x: clip;
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.55;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  transition: background var(--dur-medium) var(--ease-out),
+              color var(--dur-medium) var(--ease-out);
+}
 
-  .tabs{display:flex;gap:0;margin-bottom:12px;border-bottom:1px solid var(--border)}
-  .tab{padding:8px 18px;cursor:pointer;font-size:.85rem;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;transition:all .15s;background:none;border-top:none;border-left:none;border-right:none}
-  .tab:hover{color:var(--text)}
-  .tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+/* ---- Scrollbar ---- */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-rule); border-radius: 3px; }
 
-  .section-title{font-size:1rem;font-weight:600;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
-  .session-list{margin-bottom:20px}
-  .session-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;box-shadow:var(--shadow)}
-  .session-card:hover{border-color:var(--primary)}
-  .session-info{flex:1;min-width:0;cursor:pointer}
-  .session-info .client{font-weight:600;font-size:.9rem;display:flex;align-items:center;gap:6px}
-  .session-info .client .client-link{color:var(--text);text-decoration:none;border-bottom:1px dashed var(--border);cursor:pointer}
-  .session-info .client .client-link:hover{color:var(--primary);border-bottom-color:var(--primary)}
-  .session-info .client .rate-badge{font-size:.65rem;font-weight:700;color:var(--success);background:rgba(6,214,160,.1);padding:1px 6px;border-radius:4px}
-  .session-info .meta{font-size:.75rem;color:var(--muted);margin-top:2px}
-  .session-info .note-preview{font-size:.75rem;color:var(--muted);margin-top:1px;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:300px}
-  .session-actions{display:flex;gap:4px;flex-shrink:0}
-  .empty-state{text-align:center;padding:40px 20px;color:var(--muted)}
-  .empty-state .icon{font-size:2rem;margin-bottom:8px}
+/* ---- Container ---- */
+.container { max-width: 740px; margin: 0 auto; padding: 0 var(--space-sm); }
 
-  .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
-  .summary-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
-  .summary-card h3{font-size:.8rem;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
-  .summary-card .big{font-size:1.5rem;font-weight:700;color:var(--primary)}
-  .summary-card .sub{font-size:.75rem;color:var(--muted);margin-top:2px}
-  .summary-table{width:100%;border-collapse:collapse;font-size:.8rem}
-  .summary-table th{text-align:left;color:var(--muted);font-weight:600;padding:4px 0;border-bottom:1px solid var(--border)}
-  .summary-table td{padding:4px 0;border-bottom:1px solid var(--border)}
-  .summary-table tr:last-child td{border-bottom:none}
-  .summary-table .client-click{color:var(--text);text-decoration:none;border-bottom:1px dashed var(--border);cursor:pointer}
-  .summary-table .client-click:hover{color:var(--primary);border-bottom-color:var(--primary)}
+/* ---- Warning stripe ---- */
+.warning-stripe {
+  background: var(--color-paper-2);
+  border-bottom: 1px solid var(--color-rule);
+  padding: var(--space-xs) 0;
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  text-align: center;
+  letter-spacing: 0.01em;
+}
+.warning-stripe strong { color: var(--color-ink); font-weight: 500; }
+.warning-dismiss {
+  background: none; border: none; cursor: pointer;
+  color: var(--color-neutral); font-size: var(--text-sm);
+  margin-left: var(--space-xs); padding: 0 4px; vertical-align: middle;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+.warning-dismiss:hover { color: var(--color-ink); }
+.warning-stripe.hidden { display: none; }
 
-  .tutorial-step{display:flex;gap:12px;margin-bottom:16px}
-  .tutorial-step:last-child{margin-bottom:0}
-  .tutorial-num{width:28px;height:28px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;flex-shrink:0}
-  .tutorial-step h4{font-size:.9rem;margin-bottom:2px}
-  .tutorial-step p{font-size:.8rem;color:var(--muted);line-height:1.5}
+/* ---- Page header with brand + tagline ---- */
+.page-header {
+  text-align: center;
+  padding: var(--space-xl) 0 var(--space-sm);
+}
+.page-header h1 {
+  font-family: var(--font-mono);
+  font-size: var(--text-xl);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  color: var(--color-accent);
+}
+.page-header p {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  margin-top: var(--space-3xs);
+}
 
-  .modal-overlay{display:none;position:fixed;inset:0;background:var(--overlay);z-index:100;align-items:center;justify-content:center;padding:16px}
-  .modal-overlay.active{display:flex}
-  .modal{background:var(--card);border-radius:var(--radius);padding:24px;width:100%;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,.15);max-height:90vh;overflow-y:auto}
-  .modal h2{font-size:1.05rem;margin-bottom:16px}
-  .modal label{display:block;font-size:.8rem;font-weight:600;margin-bottom:3px;color:var(--muted)}
-  .modal input,.modal textarea,.modal select{width:100%;padding:9px 12px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:.9rem;margin-bottom:10px;outline:none;background:var(--input-bg);color:var(--text);font-family:inherit}
-  .modal input:focus,.modal textarea:focus{border-color:var(--primary)}
-  .modal textarea{resize:vertical;min-height:60px}
-  .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
-  .modal option{background:var(--card);color:var(--text)}
+/* ---- Nav (N5 — Floating pill) ---- */
+.nav {
+  margin: 0 auto var(--space-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  padding: var(--space-xs) var(--space-lg);
+  background: var(--color-paper-2);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-pill);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  flex-wrap: wrap;
+}
+.nav-btn {
+  background: none; border: none; cursor: pointer;
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--color-muted);
+  padding: var(--space-2xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  transition: color var(--dur-fast) var(--ease-out),
+              background var(--dur-fast) var(--ease-out);
+  white-space: nowrap;
+}
+.nav-btn:hover { color: var(--color-ink); background: var(--color-rule); }
+.nav-btn:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
 
-  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:#fff;padding:10px 22px;border-radius:var(--radius-sm);font-size:.85rem;opacity:0;transition:all .3s;z-index:200;pointer-events:none;white-space:nowrap}
-  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* ---- Unfinished banner ---- */
+.unfinished-banner {
+  max-width: 520px;
+  margin: 0 auto var(--space-sm);
+  padding: var(--space-xs) var(--space-md);
+  background: var(--color-paper-2);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+.unfinished-banner.hidden { display: none; }
+.unfinished-text { flex: 1; color: var(--color-neutral); }
+.unfinished-text strong { color: var(--color-accent); font-weight: 500; }
+.unfinished-actions { display: flex; gap: var(--space-2xs); }
 
-  @media(max-width:480px){
-    body{padding:10px}.stats{grid-template-columns:1fr;gap:6px}.stat-card{padding:10px}.stat-card .value{font-size:1.3rem}
-    .timer-display{font-size:2.2rem}.timer-row .client-input{width:100%}
-    .session-card{flex-direction:column;align-items:stretch}.session-info{cursor:default}
-    .session-actions{justify-content:flex-end}.summary-grid{grid-template-columns:1fr}
-    header{flex-wrap:wrap;gap:8px}.tabs{overflow-x:auto}.btn{padding:8px 16px}
-    .header-actions .btn-tutorial{font-size:.7rem;padding:4px 8px}
-    .presets{gap:4px}.preset-btn{font-size:.7rem;padding:4px 10px}
-  }
+/* ---- Marquee hero — the timer ---- */
+.hero {
+  text-align: center;
+  padding: var(--space-xl) 0 var(--space-lg);
+}
+.hero-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-neutral);
+  margin-bottom: var(--space-md);
+}
+.hero-timer {
+  font-family: var(--font-mono);
+  font-size: var(--text-display-s);
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--color-accent);
+  margin-bottom: var(--space-sm);
+  font-variant-numeric: tabular-nums;
+}
+.hero-timer.running { color: var(--color-success); }
+.hero-timer.paused  { color: var(--color-warning); }
+.hero-earnings {
+  font-size: var(--text-lg);
+  font-weight: 400;
+  color: var(--color-muted);
+  margin-bottom: var(--space-xl);
+  min-height: 1.4em;
+  font-variant-numeric: tabular-nums;
+}
+.hero-earnings.running { color: var(--color-ink); font-weight: 500; }
+
+/* ---- Timer inputs ---- */
+.hero-inputs {
+  display: flex;
+  gap: var(--space-2xs);
+  justify-content: center;
+  flex-wrap: wrap;
+  max-width: 420px;
+  margin: 0 auto var(--space-lg);
+}
+.hero-inputs input,
+.hero-inputs select {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  padding: var(--space-2xs) var(--space-sm);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  background: var(--color-paper);
+  color: var(--color-ink);
+  outline: none;
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+.hero-inputs input:focus,
+.hero-inputs select:focus { border-color: var(--color-focus); }
+.hero-inputs input::placeholder { color: var(--color-neutral); }
+.client-input { width: 200px; }
+.rate-input  { width: 90px; text-align: center; }
+.notes-input {
+  width: 100%;
+  max-width: 420px;
+  margin: var(--space-xs) auto 0;
+  display: block;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  padding: var(--space-2xs) var(--space-sm);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  background: var(--color-paper);
+  color: var(--color-muted);
+  outline: none;
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+.notes-input:focus { border-color: var(--color-focus); color: var(--color-ink); }
+.notes-area.hidden { display: none; }
+
+/* ---- Buttons ---- */
+.btn {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: var(--text-sm);
+  padding: var(--space-2xs) var(--space-xl);
+  border: none;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: opacity var(--dur-fast) var(--ease-out),
+              transform var(--dur-fast) var(--ease-out);
+}
+.btn:hover { opacity: 0.85; }
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+.btn:disabled { opacity: 0.25; cursor: not-allowed; transform: none; }
+
+.btn-primary {
+  background: var(--color-accent);
+  color: var(--color-paper);
+}
+.btn-success {
+  background: var(--color-success);
+  color: var(--color-paper);
+}
+.btn-danger {
+  background: var(--color-danger);
+  color: var(--color-paper);
+}
+.btn-warning {
+  background: var(--color-warning);
+  color: var(--color-accent);
+}
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--color-rule);
+  color: var(--color-muted);
+}
+.btn-outline:hover { border-color: var(--color-neutral); color: var(--color-ink); }
+.btn-sm  { padding: 4px var(--space-md); font-size: var(--text-xs); }
+.btn-xs  { padding: 2px var(--space-2xs); font-size: var(--text-xs); }
+
+.hero-ctas {
+  display: flex;
+  gap: var(--space-2xs);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* ---- Presets ---- */
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs);
+  justify-content: center;
+  margin-bottom: var(--space-md);
+}
+.preset-btn {
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  padding: var(--space-2xs) var(--space-sm);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-pill);
+  background: var(--color-paper-2);
+  color: var(--color-ink);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-out),
+              background var(--dur-fast) var(--ease-out);
+}
+.preset-btn:hover { border-color: var(--color-accent-dim); background: var(--color-rule); }
+.preset-btn:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+.preset-add-btn { border-style: dashed; }
+.preset-rate { color: var(--color-neutral); }
+
+/* ---- Stats row ---- */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2xs);
+  margin-bottom: var(--space-xl);
+}
+.stat-tile {
+  background: var(--color-paper-2);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+  padding: var(--space-sm) var(--space-md);
+  text-align: center;
+}
+.stat-value {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xl);
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--color-accent);
+  font-variant-numeric: tabular-nums;
+}
+.stat-label {
+  font-size: var(--text-xs);
+  color: var(--color-neutral);
+  margin-top: var(--space-3xs);
+}
+
+/* ---- Filter bar ---- */
+.filter-bar {
+  display: none;
+  align-items: center;
+  gap: var(--space-2xs);
+  padding: var(--space-xs) var(--space-md);
+  background: var(--color-paper-2);
+  border: 1px solid var(--color-accent-dim);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  margin-bottom: var(--space-sm);
+}
+.filter-bar.visible { display: flex; }
+.filter-client { font-weight: 500; color: var(--color-accent); }
+.filter-clear {
+  background: none; border: none; cursor: pointer;
+  color: var(--color-neutral); font-size: var(--text-xs);
+  margin-left: auto; padding: 2px 4px;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+.filter-clear:hover { color: var(--color-danger); }
+
+/* ---- Section head ---- */
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-sm);
+  padding-bottom: var(--space-xs);
+  border-bottom: 1px solid var(--color-rule);
+}
+.section-title {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-ink);
+}
+
+/* ---- Tabs ---- */
+.tab-group {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.tab {
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  padding: var(--space-2xs) var(--space-md);
+  border: none;
+  background: var(--color-paper);
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out),
+              color var(--dur-fast) var(--ease-out);
+}
+.tab:hover { color: var(--color-ink); }
+.tab.active {
+  background: var(--color-accent);
+  color: var(--color-paper);
+}
+.tab:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
+/* ---- Session list ---- */
+.session-list { margin-bottom: var(--space-2xl); }
+.session-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+  margin-bottom: var(--space-2xs);
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+.session-card:hover { border-color: var(--color-neutral); }
+.session-info { flex: 1; min-width: 0; cursor: pointer; }
+.session-client {
+  font-weight: 500;
+  font-size: var(--text-sm);
+  color: var(--color-ink);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2xs);
+}
+.session-client a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px dashed var(--color-neutral);
+  cursor: pointer;
+}
+.session-client a:hover { border-color: var(--color-accent); color: var(--color-accent); }
+.session-rate {
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--color-success);
+  font-family: var(--font-mono);
+}
+.session-meta {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  margin-top: 1px;
+}
+.session-note {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 280px;
+}
+.session-actions { display: flex; gap: var(--space-2xs); flex-shrink: 0; }
+
+.empty-state {
+  text-align: center;
+  padding: var(--space-2xl) var(--space-md);
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+}
+
+/* ---- Modal ---- */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: oklch(0% 0 0 / 0.35);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-sm);
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: var(--color-paper);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+  padding: var(--space-lg);
+  width: 100%;
+  max-width: 460px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+.modal h2 {
+  font-size: var(--text-lg);
+  font-weight: 500;
+  margin-bottom: var(--space-md);
+  color: var(--color-ink);
+}
+.modal label {
+  display: block;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  margin-bottom: var(--space-3xs);
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.modal input, .modal textarea, .modal select {
+  width: 100%;
+  padding: var(--space-2xs) var(--space-sm);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  background: var(--color-paper);
+  color: var(--color-ink);
+  outline: none;
+  margin-bottom: var(--space-sm);
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+.modal input:focus, .modal textarea:focus { border-color: var(--color-focus); }
+.modal input::placeholder { color: var(--color-neutral); }
+.modal textarea { resize: vertical; min-height: 56px; }
+.modal-actions {
+  display: flex;
+  gap: var(--space-2xs);
+  justify-content: flex-end;
+  margin-top: var(--space-md);
+}
+
+/* ---- Summary grid inside modal ---- */
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2xs);
+  margin-bottom: var(--space-md);
+}
+.summary-card {
+  background: var(--color-paper-2);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  padding: var(--space-sm);
+}
+.summary-card .label {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-3xs);
+}
+.summary-card .big {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xl);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  color: var(--color-accent);
+  font-variant-numeric: tabular-nums;
+}
+.summary-card .sub {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  margin-top: var(--space-3xs);
+}
+
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+.summary-table th {
+  text-align: left;
+  color: var(--color-muted);
+  font-weight: 500;
+  padding: var(--space-2xs) 0;
+  border-bottom: 1px solid var(--color-rule);
+}
+.summary-table td {
+  padding: var(--space-2xs) 0;
+  border-bottom: 1px solid var(--color-rule);
+}
+.summary-table tr:last-child td { border-bottom: none; }
+
+/* ---- Tutorial steps ---- */
+.tutorial-step {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+.tutorial-step:last-child { margin-bottom: 0; }
+.tutorial-num {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--color-accent-dim);
+  color: var(--color-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+.tutorial-step h4 {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+.tutorial-step p {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  line-height: 1.5;
+}
+
+/* ---- Toast ---- */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--color-accent);
+  color: var(--color-paper);
+  padding: var(--space-2xs) var(--space-lg);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity var(--dur-medium) var(--ease-out),
+              transform var(--dur-medium) var(--ease-out);
+  z-index: 200;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ---- Footer (Ft2) ---- */
+.footer {
+  text-align: center;
+  padding: var(--space-xl) 0 var(--space-lg);
+  border-top: 1px solid var(--color-rule);
+  margin-top: var(--space-2xl);
+}
+.footer small {
+  font-size: var(--text-xs);
+  color: var(--color-neutral);
+  display: block;
+  line-height: 2;
+}
+.footer-links {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-md);
+  margin-top: var(--space-2xs);
+}
+.footer-links a {
+  color: var(--color-ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--color-rule);
+  padding-bottom: 1px;
+}
+.footer-links a:hover { border-color: var(--color-accent); }
+
+/* ---- Responsive ---- */
+@media (max-width: 560px) {
+  .stats-row { grid-template-columns: 1fr; gap: var(--space-2xs); }
+  .hero { padding: var(--space-lg) 0 var(--space-md); }
+  .hero-timer { font-size: var(--text-3xl); }
+  .hero-inputs { flex-direction: column; align-items: center; }
+  .client-input { width: 100%; }
+  .rate-input  { width: 100%; }
+  .presets { gap: 4px; }
+  .preset-btn { font-size: var(--text-xs); padding: 2px var(--space-xs); }
+  .session-card { flex-direction: column; align-items: stretch; }
+  .session-actions { justify-content: flex-end; }
+  .page-header { padding: var(--space-lg) 0 var(--space-xs); }
+  .nav { border-radius: var(--radius); padding: var(--space-2xs); }
+  .nav-btn { font-size: var(--text-xs); padding: 4px var(--space-2xs); }
+}
+@media (max-width: 400px) {
+  .hero-inputs input, .hero-inputs select { width: 100%; }
+}
 </style>
 </head>
 <body>
 
+<div class="warning-stripe" id="warningStripe">
+  <strong>Under development.</strong> Data saved locally. Always export backups.
+  <button class="warning-dismiss" onclick="document.getElementById('warningStripe').classList.add('hidden')">✕</button>
+</div>
+
 <div class="container">
 
-  <div class="warning-banner" id="warningBanner">
-    <span class="warn-icon">⚠️</span>
-    <span class="warn-text">
-      <strong>Under development.</strong> Data is saved in browser storage.
-      Clearing cache erases everything. <strong>Always export a backup</strong> (📥).
-    </span>
-    <button class="warn-dismiss" onclick="dismissWarning()" title="Dismiss">✕</button>
-  </div>
-
-  <div class="unfinished-banner hidden" id="unfinishedBanner">
-    <div class="unfinished-content">
-      <span class="unfinished-icon">⏸️</span>
-      <span class="unfinished-text">
-        <strong>Unfinished session</strong> for <span id="unfinishedClient"></span>
-        (<span id="unfinishedDuration"></span>) —
-        <span id="unfinishedSince"></span>
-      </span>
-      <div class="unfinished-actions">
-        <button class="btn btn-primary btn-sm" onclick="resumeUnfinished()">▶ Resume</button>
-        <button class="btn btn-danger btn-sm" onclick="cancelUnfinished()">✕ Cancel</button>
-        <button class="btn btn-outline btn-sm" onclick="dismissUnfinished()">✖</button>
-      </div>
-    </div>
-  </div>
-
-  <header>
-    <div class="header-left">
-      <div class="clock-icon">
-        <div class="hand" style="width:2px;height:10px;transform:translateX(-50%) rotate(30deg)"></div>
-        <div class="hand" style="width:2px;height:14px;transform:translateX(-50%) rotate(-60deg)"></div>
-      </div>
-      <div>
-        <h1>Bilang <small>Track your billable hours</small></h1>
-      </div>
-    </div>
-    <div class="header-actions">
-      <button class="btn-tutorial" onclick="showTutorial()">📖 How to Use</button>
-      <button class="icon-btn" onclick="toggleDark()" title="Dark/Light" id="darkToggle">🌙</button>
-      <button class="icon-btn" onclick="toggleModal('summaryModal')" title="Summary">📊</button>
-      <button class="icon-btn" onclick="toggleModal('invoiceModal')" title="Invoice">📄</button>
-      <button class="icon-btn" onclick="toggleModal('settingsModal')" title="Settings">⚙️</button>
-      <button class="icon-btn" onclick="toggleModal('exportModal')" title="Export/Backup">📥</button>
-      <button class="icon-btn" onclick="toggleModal('feedbackModal')" title="Suggestions">💬 Suggestions</button>
-    </div>
+  <!-- Page header: brand + tagline -->
+  <header class="page-header">
+    <h1>Bilang</h1>
+    <p>Track your billable hours</p>
   </header>
 
-  <div class="presets" id="presets"></div>
+  <!-- Nav: N5 Floating pill -->
+  <nav class="nav">
+    <button class="nav-btn" onclick="showTutorial()">Guide</button>
+    <button class="nav-btn" onclick="toggleDark()" id="themeBtn">Theme · Light</button>
+    <button class="nav-btn" onclick="toggleModal('summaryModal')">Summary</button>
+    <button class="nav-btn" onclick="toggleModal('invoiceModal')">Invoice</button>
+    <button class="nav-btn" onclick="toggleModal('exportModal')">Export</button>
+    <button class="nav-btn" onclick="toggleModal('settingsModal')">Settings</button>
+  </nav>
 
-  <div class="filter-bar" id="filterBar">
-    <span>🔵 Showing sessions for</span>
-    <span class="client-name" id="filterClientName"></span>
-    <button class="clear-filter" onclick="clearClientFilter()">Clear filter ✕</button>
+  <!-- Unfinished banner -->
+  <div class="unfinished-banner hidden" id="unfinishedBanner">
+    <span class="unfinished-text">
+      <strong>Unfinished session</strong> for <span id="unfinishedClient"></span>
+      (<span id="unfinishedDuration"></span>)
+    </span>
+    <div class="unfinished-actions">
+      <button class="btn btn-primary btn-xs" onclick="resumeUnfinished()">Resume</button>
+      <button class="btn btn-outline btn-xs" onclick="cancelUnfinished()">Cancel</button>
+    </div>
   </div>
 
-  <div class="stats">
-    <div class="stat-card"><div class="value" id="totalClients">0</div><div class="label">Clients</div></div>
-    <div class="stat-card"><div class="value" id="totalHours">0:00</div><div class="label">Total Hours</div></div>
-    <div class="stat-card"><div class="value" id="totalEarnings">$0</div><div class="label">Earnings</div></div>
-  </div>
+  <!-- Marquee hero: the timer -->
+  <section class="hero">
+    <div class="hero-label">Timer</div>
 
-  <div class="timer-section">
-    <div class="timer-row" id="timerInputRow">
-      <input class="client-input" id="clientInput" type="text" placeholder="Client name..." autocomplete="off" list="clientSuggestions">
+    <div class="hero-inputs" id="timerInputRow">
+      <input class="client-input" id="clientInput" type="text" placeholder="Client name..." autocomplete="off" list="clientSuggestions" autofocus>
       <datalist id="clientSuggestions"></datalist>
       <input class="rate-input" id="rateInput" type="number" min="0" step="1" placeholder="$/hr">
     </div>
-    <div class="timer-display" id="timerDisplay">00:00:00</div>
-    <div class="timer-earnings" id="timerEarnings"></div>
-    <div class="timer-notes" id="timerNotes" style="display:none;margin-bottom:8px">
-      <input type="text" id="sessionNotes" placeholder="What are you working on?"
-             style="width:100%;padding:8px 12px;border:2px solid var(--border);border-radius:var(--radius-sm);
-                    font-size:.85rem;outline:none;background:var(--input-bg);color:var(--text);transition:border .2s"
-             onfocus="this.style.borderColor='var(--primary)'"
-             onblur="this.style.borderColor=''">
+
+    <div class="hero-timer" id="timerDisplay">00:00:00</div>
+    <div class="hero-earnings" id="timerEarnings"></div>
+
+    <div class="notes-area hidden" id="timerNotes">
+      <input class="notes-input" id="sessionNotes" type="text" placeholder="What are you working on?">
     </div>
-    <div class="timer-controls" id="timerControls">
-      <button class="btn btn-success" id="startBtn" onclick="startTimer()">▶ Start</button>
-      <button class="btn btn-warning" id="pauseBtn" onclick="pauseTimer()" disabled>⏸ Pause</button>
-      <button class="btn btn-primary" id="doneBtn" onclick="doneTimer()" disabled style="display:none">✅ Done</button>
-      <button class="btn btn-danger" id="stopBtn" onclick="stopTimer()" disabled>✕ Cancel</button>
+
+    <div class="hero-ctas" id="timerControls">
+      <button class="btn btn-success" id="startBtn" onclick="startTimer()">Start</button>
+      <button class="btn btn-warning" id="pauseBtn" onclick="pauseTimer()" disabled>Pause</button>
+      <button class="btn btn-primary" id="doneBtn" onclick="doneTimer()" disabled>Done</button>
+      <button class="btn btn-outline" id="stopBtn" onclick="stopTimer()" disabled>Cancel</button>
     </div>
-    <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
-      <button class="btn btn-outline btn-sm" onclick="toggleModal('supportModal')" style="color:var(--muted);font-size:.75rem">☕ Support this project</button>
-      <button class="btn btn-outline btn-sm" onclick="toggleModal('termsModal')" style="color:var(--muted);font-size:.75rem;margin-left:6px">📜 Terms</button>
+  </section>
+
+  <!-- Presets -->
+  <div class="presets" id="presets"></div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-tile">
+      <div class="stat-value" id="totalClients">0</div>
+      <div class="stat-label">Clients</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-value" id="totalHours">0:00</div>
+      <div class="stat-label">Total hours</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-value" id="totalEarnings">$0</div>
+      <div class="stat-label">Earnings</div>
     </div>
   </div>
 
-  <div class="tabs">
-    <button class="tab active" data-tab="today" onclick="switchTab('today')">📋 Today</button>
-    <button class="tab" data-tab="all" onclick="switchTab('all')">📜 All Sessions</button>
+  <!-- Filter bar -->
+  <div class="filter-bar" id="filterBar">
+    <span>Showing sessions for</span>
+    <span class="filter-client" id="filterClientName"></span>
+    <button class="filter-clear" onclick="clearClientFilter()">Clear</button>
+  </div>
+
+  <!-- Sessions -->
+  <div class="section-head">
+    <span class="section-title">Sessions</span>
+    <div class="tab-group">
+      <button class="tab active" data-tab="today" onclick="switchTab('today')">Today</button>
+      <button class="tab" data-tab="all" onclick="switchTab('all')">All</button>
+    </div>
   </div>
 
   <div class="session-list" id="sessionList"></div>
 </div>
 
-<!-- Tutorial -->
+<!-- Footer: Ft2 -->
+<footer class="footer">
+  <small>Bilang — free offline time tracker for freelancers.</small>
+  <div class="footer-links">
+    <a href="#" onclick="toggleModal('supportModal');return false">Support this project</a>
+    <a href="#" onclick="toggleModal('termsModal');return false">Terms</a>
+  </div>
+</footer>
+
+<!-- Modals -->
 <div class="modal-overlay" id="tutorialModal">
   <div class="modal">
-    <h2>📖 How to Use Bilang</h2>
-    <div class="tutorial-step"><div class="tutorial-num">1</div><div><h4>Quick-Start or Manual</h4><p>Click a <strong>preset button</strong> above the timer, or type a client name + rate. Press <kbd>Enter</kbd> to start tracking.</p></div></div>
-    <div class="tutorial-step"><div class="tutorial-num">2</div><div><h4>Track Your Time</h4><p><strong>⏸ Pause</strong> for breaks, <strong>✅ Done</strong> to finish and save, <strong>✕ Cancel</strong> to end without logging billable time (session is still saved as "Cancelled" so no data is lost).</p></div></div>
-    <div class="tutorial-step"><div class="tutorial-num">3</div><div><h4>Review & Filter</h4><p>Click a client name to see their history. <strong>📊</strong> for weekly/monthly summaries. <strong>📥</strong> to backup.</p></div></div>
-    <div class="tutorial-step"><div class="tutorial-num">4</div><div><h4>Bill Your Client</h4><p>Click <strong>📄</strong> to generate an invoice. Pick a client, date range, and payment terms — then save as PDF. Ready to send.</p></div></div>
-    <div class="modal-actions"><button class="btn btn-primary btn-sm" onclick="closeTutorial()">Got it!</button></div>
+    <h2>How to use Bilang</h2>
+    <div class="tutorial-step">
+      <div class="tutorial-num">1</div>
+      <div><h4>Start tracking</h4><p>Type a client name and rate, or click a preset. Press Start.</p></div>
+    </div>
+    <div class="tutorial-step">
+      <div class="tutorial-num">2</div>
+      <div><h4>Manage sessions</h4><p>Pause for breaks, Done to save, Cancel to end without logging billable time.</p></div>
+    </div>
+    <div class="tutorial-step">
+      <div class="tutorial-num">3</div>
+      <div><h4>Review & bill</h4><p>Click a client name to filter. Summary for week/month. Invoice to generate a PDF.</p></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary btn-sm" onclick="closeTutorial()">Got it</button>
+    </div>
   </div>
 </div>
 
-<!-- Summary Modal -->
 <div class="modal-overlay" id="summaryModal">
   <div class="modal">
-    <h2>📊 Earnings Summary</h2>
+    <h2>Earnings summary</h2>
     <div class="summary-grid">
-      <div class="summary-card"><h3>This Week</h3><div class="big" id="weekEarnings">$0</div><div class="sub" id="weekHours">0 hrs</div></div>
-      <div class="summary-card"><h3>This Month</h3><div class="big" id="monthEarnings">$0</div><div class="sub" id="monthHours">0 hrs</div></div>
+      <div class="summary-card">
+        <div class="label">This week</div>
+        <div class="big" id="weekEarnings">$0</div>
+        <div class="sub" id="weekHours">0 hrs</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">This month</div>
+        <div class="big" id="monthEarnings">$0</div>
+        <div class="sub" id="monthHours">0 hrs</div>
+      </div>
     </div>
-    <h3 style="font-size:.85rem;color:var(--muted);margin-bottom:6px">By Client (This Month)</h3>
-    <table class="summary-table"><thead><tr><th>Client</th><th>Hours</th><th>Earnings</th></tr></thead><tbody id="clientSummaryBody"></tbody></table>
-    <div class="modal-actions"><button class="btn btn-outline btn-sm" onclick="toggleModal('summaryModal')">Close</button></div>
+    <h3 style="font-size:var(--text-xs);color:var(--color-muted);margin-bottom:var(--space-xs);text-transform:uppercase;letter-spacing:0.05em;font-weight:500">By client (this month)</h3>
+    <table class="summary-table">
+      <thead><tr><th>Client</th><th>Hours</th><th>Earnings</th></tr></thead>
+      <tbody id="clientSummaryBody"></tbody>
+    </table>
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-sm" onclick="toggleModal('summaryModal')">Close</button>
+    </div>
   </div>
 </div>
 
-<!-- Invoice Modal -->
 <div class="modal-overlay" id="invoiceModal">
   <div class="modal">
-    <h2>📄 Generate Invoice</h2>
-    <label>Your Name / Business</label>
-    <input type="text" id="invBizName" placeholder="Your name or business">
+    <h2>Generate invoice</h2>
+    <label>Your name / business</label>
+    <input id="invoiceBusinessName" type="text" placeholder="Your name or business">
     <label>Client</label>
-    <select id="invoiceClient"><option value="">— Select a client —</option></select>
-    <label>From</label>
-    <input type="date" id="invoiceFrom">
-    <label>To</label>
-    <input type="date" id="invoiceTo">
-    <label>Payment Due</label>
-    <select id="invoiceDue">
-      <option value="0">Due on receipt</option>
-      <option value="7">7 days</option>
-      <option value="15" selected>15 days</option>
-      <option value="30">30 days</option>
-      <option value="60">60 days</option>
-    </select>
-    <label>Template</label>
-    <select id="invoiceTemplate">
-      <option value="professional">Professional</option>
-      <option value="minimal">Minimal</option>
-      <option value="elegant">Elegant</option>
-      <option value="modern">Modern — Navy</option>
-      <option value="modern-teal">Modern — Teal</option>
-      <option value="modern-terracotta">Modern — Terracotta</option>
-      <option value="corporate">Corporate</option>
+    <select id="invoiceClient"></select>
+    <label>Date range</label>
+    <div style="display:flex;gap:var(--space-2xs)">
+      <input id="invoiceFrom" type="date" style="flex:1">
+      <input id="invoiceTo" type="date" style="flex:1">
+    </div>
+    <label>Payment terms</label>
+    <select id="invoiceTerms">
+      <option value="7">Net 7</option>
+      <option value="15">Net 15</option>
+      <option value="30" selected>Net 30</option>
+      <option value="60">Net 60</option>
     </select>
     <div class="modal-actions">
       <button class="btn btn-outline btn-sm" onclick="toggleModal('invoiceModal')">Cancel</button>
-      <button class="btn btn-primary btn-sm" onclick="generateInvoice()">📄 Generate</button>
+      <button class="btn btn-primary btn-sm" onclick="generateInvoice()">Generate PDF</button>
     </div>
   </div>
 </div>
 
-<!-- Support Modal -->
+<div class="modal-overlay" id="exportModal">
+  <div class="modal">
+    <h2>Export / backup</h2>
+    <p style="font-size:var(--text-sm);color:var(--color-muted);margin-bottom:var(--space-md)">All data is stored in your browser's local storage. Export regularly.</p>
+    <div style="display:flex;gap:var(--space-2xs);flex-wrap:wrap">
+      <button class="btn btn-primary btn-sm" onclick="exportBackup()">Export JSON</button>
+      <button class="btn btn-outline btn-sm" onclick="document.getElementById('importInput').click()">Import</button>
+      <input type="file" id="importInput" accept=".json" style="display:none" onchange="importBackup(event)">
+      <button class="btn btn-outline btn-sm" onclick="exportCSV()">Export CSV</button>
+      <button class="btn btn-outline btn-sm" onclick="clearAllData()">Reset</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-sm" onclick="toggleModal('exportModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <h2>Settings</h2>
+    <label>Currency</label>
+    <select id="currencySelect" onchange="saveCurrency()">
+      <option value="USD">USD ($)</option>
+      <option value="PHP">PHP (₱)</option>
+      <option value="EUR">EUR (€)</option>
+      <option value="GBP">GBP (£)</option>
+    </select>
+    <label>Default hourly rate</label>
+    <input id="defaultRateInput" type="number" min="0" step="1" placeholder="$0" onchange="saveDefaultRate()">
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-sm" onclick="toggleModal('settingsModal')">Close</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="supportModal">
   <div class="modal" style="text-align:center">
-    <h2>☕ Support This Project</h2>
-    <p style="font-size:.85rem;color:var(--muted);margin-bottom:16px">
+    <h2>Support this project</h2>
+    <p style="font-size:var(--text-sm);color:var(--color-muted);margin-bottom:var(--space-md)">
       Bilang is and will always be free.<br>
       If it helps you earn, consider buying me a coffee ❤️
     </p>
-    <div style="background:var(--input-bg);border-radius:var(--radius);padding:20px;margin-bottom:16px;display:inline-block">
-      <img src="assets/gcash-qr.jpg?v=2" alt="GCash QR" style="width:220px;height:220px;display:block;margin:0 auto;border-radius:8px">
+    <div style="background:var(--color-paper-2);border-radius:var(--radius);padding:var(--space-md);margin-bottom:var(--space-md);display:inline-block">
+      <img src="assets/gcash-qr.jpg?v=2" alt="GCash QR" style="width:220px;height:220px;display:block;margin:0 auto;border-radius:var(--radius-sm)">
     </div>
-    <p style="font-size:.8rem;color:var(--muted)">Scan with GCash to send a donation</p>
-    <div class="modal-actions" style="justify-content:center;margin-top:12px">
+    <p style="font-size:var(--text-xs);color:var(--color-muted)">Scan with GCash to send a donation</p>
+    <div class="modal-actions" style="justify-content:center;margin-top:var(--space-sm)">
       <button class="btn btn-primary btn-sm" onclick="toggleModal('supportModal')">Close</button>
     </div>
   </div>
 </div>
-<!-- Terms Modal -->
+
 <div class="modal-overlay" id="termsModal">
-  <div class="modal" style="max-width:520px">
-    <h2>📜 Terms of Use</h2>
-    <div style="font-size:.82rem;color:var(--text);line-height:1.7">
-      <p><strong>Bilang</strong> is a free time-tracking tool provided as-is, with no warranties or guarantees.</p>
-      <br>
-      <p><strong>1. Data & Privacy.</strong> All your data — sessions, notes, settings — is stored entirely in your browser's localStorage. Nothing is uploaded, transmitted, or stored on any server. We have no access to your data. Back up your data regularly using the Export feature; clearing your browser cache will erase everything.</p>
-      <br>
-      <p><strong>2. No Warranty.</strong> This tool is provided "as is" without warranty of any kind. We make no guarantees about accuracy, availability, or fitness for a particular purpose. Time records and invoices you generate are your responsibility — verify before sending to clients.</p>
-      <br>
-      <p><strong>3. No Liability.</strong> We are not liable for any damages, lost revenue, billing disputes, or data loss arising from the use of Bilang. You use this tool at your own risk.</p>
-      <br>
-      <p><strong>4. Honest Use.</strong> Bilang is designed for honest time tracking. We've intentionally removed the ability to edit session durations to prevent misuse. Do not use this tool to misrepresent your billable hours.</p>
-      <br>
-      <p><strong>5. Free Forever.</strong> Bilang is and will remain free. No paid tiers, no subscriptions, no ads. If you'd like to support the project, donations are accepted via GCash.</p>
-      <br>
-      <p><strong>6. Changes.</strong> These terms may be updated as the tool evolves. Continued use after changes constitutes acceptance.</p>
-      <br>
-      <p style="color:var(--muted);font-size:.75rem">Last updated: May 23, 2026 · Built by Jaytech Tips for the PH freelance community.</p>
-    </div>
-    <div class="modal-actions" id="termsActions">
-      <button class="btn btn-primary btn-sm" onclick="acceptTerms()">I Agree</button>
-      <button class="btn btn-outline btn-sm" onclick="toggleModal('termsModal')" id="termsGotIt" style="display:none">Got it</button>
-    </div>
-  </div>
-</div>
-
-<!-- Settings Modal -->
-<div class="modal-overlay" id="settingsModal">
   <div class="modal">
-    <h2>⚙️ Settings</h2>
-    <label>Default Hourly Rate</label>
-    <input type="number" id="defaultRate" min="0" step="1">
-    <label>Currency</label>
-    <select id="currencySelect"><option value="$">$ (USD)</option><option value="₱">₱ (PHP)</option></select>
-
-    <h3 style="font-size:.9rem;margin:16px 0 8px;color:var(--text)">🧾 Invoice Details</h3>
-    <label>Your Name / Business Name</label>
-    <input type="text" id="invoiceBusinessName" placeholder="Your name or business">
-    <label>Your Email</label>
-    <input type="email" id="invoiceEmail" placeholder="you@email.com">
-
-    <h3 style="font-size:.9rem;margin:16px 0 8px;color:var(--text)">🏃 Quick-Start Presets</h3>
-    <div id="presetList"></div>
-    <button class="btn btn-outline btn-sm" onclick="addPresetField()" style="width:100%;margin-bottom:10px">+ Add Preset</button>
-
+    <h2>Terms</h2>
+    <p style="font-size:var(--text-sm);color:var(--color-muted);line-height:1.6">Bilang is a free tool provided as-is. Data is stored locally in your browser — we never see or store your data on any server. No guarantees, no warranties. Use at your own risk.</p>
     <div class="modal-actions">
-      <button class="btn btn-outline btn-sm" onclick="toggleModal('settingsModal')">Cancel</button>
-      <button class="btn btn-primary btn-sm" onclick="saveSettings()">Save</button>
+      <button class="btn btn-outline btn-sm" onclick="toggleModal('termsModal')">Close</button>
     </div>
   </div>
 </div>
 
-<!-- Edit Session Modal -->
-<div class="modal-overlay" id="editModal">
-  <div class="modal">
-    <h2>✏️ Edit Session</h2>
-    <label>Client</label><input type="text" id="editClient">
-    <label>Date</label><input type="date" id="editDate">
-    <label>Duration</label>
-    <div style="padding:9px 12px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:.9rem;margin-bottom:10px;background:var(--input-bg);color:var(--text)" id="editDurationDisplay"></div>
-    <label>Hourly Rate</label>
-    <div style="padding:9px 12px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:.9rem;margin-bottom:10px;background:var(--input-bg);color:var(--text)" id="editRateDisplay"></div>
-    <label>Status</label>
-    <select id="editStatus">
-      <option value="completed">✅ Completed</option>
-      <option value="cancelled">✕ Cancelled</option>
-    </select>
-    <label>Notes</label><textarea id="editNotes" placeholder="What did you work on?"></textarea>
-    <div class="modal-actions"><button class="btn btn-outline btn-sm" onclick="toggleModal('editModal')">Cancel</button><button class="btn btn-primary btn-sm" onclick="saveEditSession()">Save</button></div>
-  </div>
-</div>
-
-<!-- Feedback Modal -->
-<div class="modal-overlay" id="feedbackModal">
-  <div class="modal" style="text-align:center">
-    <h2>💬 Suggestions?</h2>
-    <p style="font-size:.85rem;color:var(--muted);margin-bottom:16px">
-      Got an idea to make Bilang better?<br>
-      Found a bug? Something confusing?<br>
-      Let me know through the form below 👇
-    </p>
-    <div style="background:var(--input-bg);border-radius:var(--radius);padding:4px;margin-bottom:12px;overflow:hidden">
-      <iframe src="https://docs.google.com/forms/d/e/1FAIpQLScAUocFMpi9O7uWq0yt6rvwEmFwE1Lo5v_5gdWlN3o2W8Q8BQ/viewform?embedded=true" width="100%" height="420" frameborder="0" marginheight="0" marginwidth="0" style="border-radius:6px">Loading…</iframe>
-    </div>
-    <div class="modal-actions" style="justify-content:center">
-      <button class="btn btn-primary btn-sm" onclick="toggleModal('feedbackModal')">Close</button>
-    </div>
-  </div>
-</div>
-
-<!-- Export Modal -->
-<div class="modal-overlay" id="exportModal">
-  <div class="modal">
-    <h2>📥 Export / Import</h2>
-    <p style="font-size:.8rem;color:var(--muted);margin-bottom:12px">⚠️ Data stored in browser. Always backup before clearing cache.</p>
-    <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="exportAllCSV()">Export All as CSV</button>
-    <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="exportJSON()">Export as JSON (Backup)</button>
-    <button class="btn btn-success" style="width:100%;margin-bottom:8px" onclick="importJSON()">Import Backup</button>
-    <input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(event)">
-    <button class="btn btn-danger" style="width:100%" onclick="clearAllData()">🗑 Clear All Data</button>
-    <div class="modal-actions" style="margin-top:10px"><button class="btn btn-outline btn-sm" onclick="toggleModal('exportModal')">Close</button></div>
-  </div>
-</div>
-
+<!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
-// ============================================================
-// DATA LAYER
-// ============================================================
-const SK='client_clock_data',TK='client_clock_timer',WK='client_clock_warn',TUK='client_clock_tutorial',TAK='bilang_terms';
+// ============ STATE ============
+let state = {
+  sessions: [],
+  presets: [],
+  timerRunning: false,
+  timerPaused: false,
+  timerStart: null,
+  timerElapsed: 0,
+  timerInterval: null,
+  currentClient: '',
+  currentRate: 0,
+  currentSessionId: null,
+  filterClient: null,
+  activeTab: 'today',
+  darkMode: false,
+  currency: localStorage.getItem('bilang_currency') || 'USD',
+  defaultRate: parseFloat(localStorage.getItem('bilang_defaultRate')) || 0,
+};
+const CURRENCY_SYMBOLS = { USD: '$', PHP: '₱', EUR: '€', GBP: '£' };
+const STORAGE_KEY = 'bilang_sessions';
+const PRESETS_KEY = 'bilang_presets';
 
-function dd(){return{sessions:[],clientRates:{},presets:[],settings:{defaultRate:25,currency:'$',darkMode:false,businessName:'',businessEmail:''}}}
-function ld(){try{const r=localStorage.getItem(SK);if(!r)return dd();const d=JSON.parse(r);return{sessions:d.sessions||[],clientRates:d.clientRates||{},presets:d.presets||[],settings:{...dd().settings,...(d.settings||{})}}}catch{return dd()}}
-let data=ld();
-function sv(){localStorage.setItem(SK,JSON.stringify(data))}
-function svt(){if(ts){const t={...ts};t._ts=Date.now();localStorage.setItem(TK,JSON.stringify(t))}else localStorage.removeItem(TK)}
-function ldt(){try{const r=localStorage.getItem(TK);if(!r)return null;const t=JSON.parse(r);if(t.running){const e=(Date.now()-t._ts)/1000;t.elapsed+=Math.max(0,e);t.startTime=Date.now()}return t}catch{return null}}
-
-// ============================================================
-// SOUND
-// ============================================================
-let ac=null;
-function beep(freq=800,dur=.15,vol=.3){
-  try{if(!ac)ac=new(window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);o.frequency.value=freq;g.gain.setValueAtTime(vol,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+dur);o.start(ac.currentTime);o.stop(ac.currentTime+dur)}catch(e){}
-}
-function alarm(){
-  beep(660,.12,.4);setTimeout(()=>beep(880,.15,.4),150);setTimeout(()=>beep(1100,.2,.4),350)
-}
-function notify(title, body){
-  if(!("Notification" in window)||Notification.permission==='denied')return;
-  if(Notification.permission==='granted'){new Notification(title,{body})}
-}
-
-function dismissWarning(){localStorage.setItem(WK,'1');document.getElementById('warningBanner').classList.add('hidden')}
-
-// ============================================================
-// UNFINISHED SESSION
-// ============================================================
-function showUnfinishedBanner(savedTs){
-  const el=document.getElementById('unfinishedBanner');
-  document.getElementById('unfinishedClient').textContent=savedTs.client||'Session';
-  document.getElementById('unfinishedDuration').textContent=fmtShort(savedTs.elapsed||0);
-  const since=savedTs._ts?new Date(savedTs._ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'';
-  document.getElementById('unfinishedSince').textContent='started at '+since;
-  el.classList.remove('hidden')
-}
-function resumeUnfinished(){
-  const el=document.getElementById('unfinishedBanner');el.classList.add('hidden');
-  document.getElementById('clientInput').value=ts?.client||'';
-  if(data.clientRates[ts?.client])document.getElementById('rateInput').value=data.clientRates[ts.client];
-  if(ts){ts.running=true;ts.startTime=Date.now();svt();updateDisplay();showToast('▶ Resumed')}
-}
-function cancelUnfinished(){
-  if(!ts)return;
-  const now=Date.now(),elapsedSec=ts.elapsed||0;
-  if(elapsedSec>=5){
-    const session={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),client:ts.client||'Session',
-      start:now-(elapsedSec*1000),end:now,duration:Math.round(elapsedSec),
-      rate:data.clientRates[ts.client]||data.settings.defaultRate,notes:'',
-      timestamp:new Date().toISOString(),status:'cancelled'};
-    data.sessions.push(session);sv();render()
+// ============ PERSISTENCE ============
+function loadState() {
+  try {
+    const d = localStorage.getItem(STORAGE_KEY);
+    if (d) state.sessions = JSON.parse(d);
+    const p = localStorage.getItem(PRESETS_KEY);
+    if (p) state.presets = JSON.parse(p);
+  } catch(e) {}
+  const unfinished = localStorage.getItem('bilang_unfinished');
+  if (unfinished) {
+    try {
+      const u = JSON.parse(unfinished);
+      const elapsed = Date.now() - u.start;
+      document.getElementById('unfinishedClient').textContent = u.client;
+      document.getElementById('unfinishedDuration').textContent = formatTime(Math.floor(elapsed / 1000));
+      document.getElementById('unfinishedBanner').classList.remove('hidden');
+      state.currentSessionId = u.id;
+    } catch(e) { localStorage.removeItem('bilang_unfinished'); }
   }
-  document.getElementById('unfinishedBanner').classList.add('hidden');
-  ts=null;svt();showToast('Cancelled — saved as cancelled')
+  if (localStorage.getItem('bilang_dark') === '1') {
+    state.darkMode = true;
+    document.body.classList.add('dark');
+    document.getElementById('themeBtn').textContent = 'Theme · Dark';
+  }
+  state.currency = localStorage.getItem('bilang_currency') || 'USD';
+  document.getElementById('currencySelect').value = state.currency;
+  state.defaultRate = parseFloat(localStorage.getItem('bilang_defaultRate')) || 0;
+  if (state.defaultRate) document.getElementById('defaultRateInput').value = state.defaultRate;
 }
-function dismissUnfinished(){
-  document.getElementById('unfinishedBanner').classList.add('hidden');
-  ts=null;svt();showToast('Dismissed')
-}
+function saveSessions() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.sessions)); }
+function savePresets() { localStorage.setItem(PRESETS_KEY, JSON.stringify(state.presets)); }
 
-// ============================================================
-// PRESETS
-// ============================================================
-function renderPresets(){
-  const el=document.getElementById('presets');
-  let html=(data.presets||[]).map((p,i)=>`<button class="preset-btn" onclick="quickStart(${i})" title="${esc(p.name)} — ${data.settings.currency}${p.rate}/hr">${esc(p.name)} <span class="preset-rate">${data.settings.currency}${p.rate}/hr</span></button>`).join('');
-  html+=`<button class="preset-btn preset-add-btn" onclick="openPresetSettings()">+ Add Client</button>`;
-  el.innerHTML=html;
+// ============ TIMER ============
+function startTimer() {
+  const client = document.getElementById('clientInput').value.trim();
+  const rate = parseFloat(document.getElementById('rateInput').value) || state.defaultRate;
+  if (!client) { showToast('Enter a client name'); return; }
+  state.currentClient = client; state.currentRate = rate;
+  state.timerRunning = true; state.timerPaused = false;
+  state.timerStart = Date.now(); state.timerElapsed = 0;
+  state.currentSessionId = 's_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
+  document.getElementById('startBtn').disabled = true;
+  document.getElementById('pauseBtn').disabled = false;
+  document.getElementById('stopBtn').disabled = false;
+  document.getElementById('doneBtn').style.display = '';
+  document.getElementById('doneBtn').disabled = false;
+  document.getElementById('timerNotes').style.display = '';
+  document.getElementById('timerInputRow').style.display = 'none';
+  document.getElementById('timerDisplay').classList.remove('paused');
+  document.getElementById('timerDisplay').classList.add('running');
+  document.getElementById('timerEarnings').classList.add('running');
+  localStorage.setItem('bilang_unfinished', JSON.stringify({id:state.currentSessionId,client,start:state.timerStart}));
+  state.timerInterval = setInterval(updateTimer, 100);
 }
-
-function quickStart(i){
-  const p=data.presets[i];if(!p)return;
-  stopTimer();document.getElementById('clientInput').value=p.name;document.getElementById('rateInput').value=p.rate;
+function pauseTimer() {
+  if (state.timerPaused) {
+    state.timerPaused = false; state.timerStart = Date.now();
+    document.getElementById('pauseBtn').textContent = 'Pause';
+    document.getElementById('timerDisplay').classList.remove('paused');
+    document.getElementById('timerDisplay').classList.add('running');
+    state.timerInterval = setInterval(updateTimer, 100);
+  } else {
+    state.timerPaused = true; clearInterval(state.timerInterval);
+    document.getElementById('pauseBtn').textContent = 'Resume';
+    document.getElementById('timerDisplay').classList.remove('running');
+    document.getElementById('timerDisplay').classList.add('paused');
+  }
+}
+function stopTimer() {
+  clearInterval(state.timerInterval);
+  state.timerRunning = false; state.timerPaused = false;
+  resetTimerUI(); localStorage.removeItem('bilang_unfinished');
+  showToast('Session cancelled');
+}
+function doneTimer() {
+  clearInterval(state.timerInterval);
+  const totalSec = Math.floor(state.timerElapsed/1000)+Math.floor((Date.now()-state.timerStart)/1000);
+  const note = document.getElementById('sessionNotes').value.trim();
+  state.sessions.unshift({id:state.currentSessionId,client:state.currentClient,rate:state.currentRate,duration:totalSec,earnings:(totalSec/3600)*state.currentRate,start:state.timerStart,note,date:new Date().toISOString().slice(0,10),status:'billable'});
+  saveSessions(); localStorage.removeItem('bilang_unfinished');
+  resetTimerUI(); updateAll();
+  showToast('Session saved for '+state.currentClient);
+}
+function updateTimer() {
+  const elapsed = state.timerElapsed + (Date.now()-state.timerStart);
+  document.getElementById('timerDisplay').textContent = formatTime(Math.floor(elapsed/1000));
+  document.getElementById('timerEarnings').textContent = CURRENCY_SYMBOLS[state.currency]+((elapsed/3600000)*state.currentRate).toFixed(2);
+}
+function resetTimerUI() {
+  document.getElementById('startBtn').disabled = false;
+  document.getElementById('pauseBtn').disabled = true;
+  document.getElementById('stopBtn').disabled = true;
+  document.getElementById('doneBtn').disabled = true;
+  document.getElementById('doneBtn').style.display = 'none';
+  document.getElementById('timerDisplay').textContent = '00:00:00';
+  document.getElementById('timerDisplay').className = 'hero-timer';
+  document.getElementById('timerEarnings').textContent = '';
+  document.getElementById('timerEarnings').className = 'hero-earnings';
+  document.getElementById('timerNotes').style.display = 'none';
+  document.getElementById('sessionNotes').value = '';
+  document.getElementById('timerInputRow').style.display = '';
+}
+function resumeUnfinished() {
+  const u = JSON.parse(localStorage.getItem('bilang_unfinished'));
+  if (!u) return;
+  document.getElementById('clientInput').value = u.client;
+  document.getElementById('unfinishedBanner').classList.add('hidden');
   startTimer();
 }
-
-function openPresetSettings(){toggleModal('settingsModal');setTimeout(()=>{const e=document.getElementById('presetList');if(e)e.scrollIntoView({behavior:'smooth',block:'center'})},200)}
-function renderPresetEditor(){
-  const el=document.getElementById('presetList');
-  el.innerHTML=(data.presets||[]).map((p,i)=>`<div style="display:flex;gap:6px;margin-bottom:6px;align-items:center"><input type="text" id="pe_n_${i}" value="${esc(p.name)}" placeholder="Client" style="flex:1;margin-bottom:0"><input type="number" id="pe_r_${i}" value="${p.rate}" min="0" step="1" style="width:80px;margin-bottom:0" placeholder="Rate"><button class="btn btn-danger btn-xs" onclick="removePresetField(${i})" style="padding:4px 8px">✕</button></div>`).join('');
-}
-function addPresetField(){data.presets.push({name:'',rate:data.settings.defaultRate});renderPresetEditor()}
-function removePresetField(i){data.presets.splice(i,1);renderPresetEditor()}
-
-// ============================================================
-// TIMER
-// ============================================================
-let ts=null;
-function fmt(s){const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),se=Math.floor(s%60);return`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(se).padStart(2,'0')}`}
-function fmtShort(s){const h=Math.floor(s/3600),m=Math.floor((s%3600)/60);return h>0?`${h}h ${m}m`:`${m}m`}
-function fmtDec(s){return(s/3600).toFixed(2)}
-
-function updateDisplay(){
-  if(!ts){
-    document.title='Bilang';
-    document.getElementById('timerDisplay').textContent='00:00:00';
-    document.getElementById('timerDisplay').className='timer-display';
-    document.getElementById('timerEarnings').textContent='';
-    return
-  }
-  const now=Date.now();
-  const elapsed=ts.running?(now-ts.startTime)/1000+ts.elapsed:ts.elapsed;
-  const display=fmt(elapsed);
-  const cls='timer-display'+(ts.running?' running':' paused');
-
-  document.getElementById('timerDisplay').textContent=display;
-  document.getElementById('timerDisplay').className=cls;
-  document.title=display+' - Bilang';
-
-  const hrs=elapsed/3600;
-  const rate=data.clientRates[ts.client]||data.settings.defaultRate;
-  const earned=hrs*rate;
-  const el=document.getElementById('timerEarnings');
-  if(ts.running){el.textContent=`💰 ${data.settings.currency}${earned.toFixed(2)} earned so far`;el.className='timer-earnings running'}
-  else if(!ts.running&&ts.elapsed>0){el.textContent=`💰 ${data.settings.currency}${earned.toFixed(2)} earned`;el.className='timer-earnings'}
-  else el.textContent='';
-
-  updateButtons();
+function cancelUnfinished() {
+  localStorage.removeItem('bilang_unfinished');
+  document.getElementById('unfinishedBanner').classList.add('hidden');
 }
 
-function updateButtons(){
-  const hasClient=!!document.getElementById('clientInput').value.trim();
-  const timerActive=!!(ts&&(ts.running||(!ts.running&&ts.elapsed>0)));
-  document.getElementById('startBtn').disabled=!hasClient||(ts&&ts.running);
-  document.getElementById('pauseBtn').disabled=!ts?.running;
-  document.getElementById('doneBtn').style.display=timerActive?'inline-block':'none';
-  document.getElementById('doneBtn').disabled=!timerActive;
-  document.getElementById('stopBtn').disabled=!ts;
+// ============ PRESETS ============
+function renderPresets() {
+  const el = document.getElementById('presets');
+  el.innerHTML = state.presets.map(p => '<button class="preset-btn" onclick="usePreset(\''+p.name+'\','+p.rate+')">'+p.name+' <span class="preset-rate">'+CURRENCY_SYMBOLS[state.currency]+p.rate+'/hr</span></button>').join('');
+  el.innerHTML += '<button class="preset-btn preset-add-btn" onclick="addPreset()">+ Add preset</button>';
 }
-
-function startTimer(){
-  if("Notification" in window&&Notification.permission==='default'){Notification.requestPermission()}
-  const client=document.getElementById('clientInput').value.trim();
-  const rate=parseFloat(document.getElementById('rateInput').value)||data.settings.defaultRate;
-
-  if(!client){showToast('Enter a client name');return}
-  data.clientRates[client]=rate;sv();
-  if(ts&&!ts.running&&ts.client===client){ts.running=true;ts.startTime=Date.now()}
-  else{
-    if(ts)saveSession();
-    ts={client,startTime:Date.now(),elapsed:0,running:true};
-    document.getElementById('timerNotes').style.display='block';document.getElementById('sessionNotes').value='';document.getElementById('sessionNotes').focus()
-  }
-  svt();updateDisplay()
+function usePreset(name, rate) {
+  document.getElementById('clientInput').value = name;
+  document.getElementById('rateInput').value = rate;
 }
-
-function pauseTimer(){
-  if(!ts?.running)return;
-  ts.elapsed=(Date.now()-ts.startTime)/1000+ts.elapsed;
-  ts.running=false;svt();updateDisplay()
+function addPreset() {
+  const name = prompt('Preset name (e.g., "Video Edit"):');
+  if (!name) return;
+  const rate = prompt('Hourly rate:'); if (!rate||isNaN(rate)) return;
+  state.presets.push({name,rate:parseFloat(rate)});
+  savePresets(); renderPresets();
 }
-
-function doneTimer(){
-  if(!ts)return;
-  const now=Date.now(),elapsedSec=ts.running?(now-ts.startTime)/1000+ts.elapsed:ts.elapsed;
-  if(elapsedSec<5){showToast('Too short (<5s)');return}
-
-  const client=document.getElementById('clientInput').value.trim()||'Session';
-  const notesVal=document.getElementById('sessionNotes').value.trim();
-  const session={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),client:client,start:ts.running?ts.startTime:(ts.startTime-ts.elapsed*1000),end:now,duration:Math.round(elapsedSec),rate:data.clientRates[client]||data.settings.defaultRate,notes:notesVal,status:'completed',timestamp:new Date().toISOString()};
-  data.sessions.push(session);sv();render();beep();
-  showToast(`✓ ${fmt(elapsedSec)} logged for ${client} — ${data.settings.currency}${((elapsedSec/3600)*session.rate).toFixed(2)}`);
-
-  document.getElementById('timerNotes').style.display='none';document.getElementById('sessionNotes').value='';
-  ts=null;document.getElementById('timerDisplay').textContent='00:00:00';document.getElementById('timerDisplay').className='timer-display';
-  document.getElementById('timerEarnings').textContent='';
-  updateButtons();document.getElementById('clientInput').value='';document.getElementById('rateInput').value='';
-  svt()
+// ============ SESSIONS ============
+function renderSessions() {
+  let list = state.sessions;
+  if (state.filterClient) list = list.filter(s=>s.client===state.filterClient);
+  if (state.activeTab==='today') { const t=new Date().toISOString().slice(0,10); list=list.filter(s=>s.date===t); }
+  const el = document.getElementById('sessionList');
+  if (!list.length) { el.innerHTML='<div class="empty-state">Start a timer to log your first session</div>'; return; }
+  el.innerHTML = list.map(s=>'<div class="session-card"><div class="session-info" onclick="filterByClient(\''+s.client+'\')"><div class="session-client"><a href="#" onclick="event.stopPropagation();filterByClient(\''+s.client+'\');return false">'+escHtml(s.client)+'</a> <span class="session-rate">'+CURRENCY_SYMBOLS[state.currency]+s.rate+'/hr</span></div><div class="session-meta">'+formatTime(s.duration)+' · '+CURRENCY_SYMBOLS[state.currency]+(s.earnings||0).toFixed(2)+'</div>'+(s.note?'<div class="session-note">'+escHtml(s.note)+'</div>':'')+'</div><div class="session-actions"><button class="btn btn-outline btn-xs" onclick="deleteSession(\''+s.id+'\')">✕</button></div></div>').join('');
 }
-
-function stopTimer(){
-  if(!ts)return;
-  const now=Date.now(),elapsedSec=ts.running?(now-ts.startTime)/1000+ts.elapsed:ts.elapsed;
-  if(elapsedSec>=5){
-    const client=document.getElementById('clientInput').value.trim()||'Session';
-    const cancelNotes=document.getElementById('sessionNotes').value.trim();
-    const session={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),client:client,start:ts.running?ts.startTime:(ts.startTime-ts.elapsed*1000),end:now,duration:Math.round(elapsedSec),rate:data.clientRates[client]||data.settings.defaultRate,notes:cancelNotes,timestamp:new Date().toISOString(),status:'cancelled'};
-    data.sessions.push(session);sv();render();
-  }
-  clearTimer();showToast('Cancelled — session saved as cancelled')
+function filterByClient(c) { state.filterClient=c; document.getElementById('filterClientName').textContent=c; document.getElementById('filterBar').classList.add('visible'); renderSessions(); }
+function clearClientFilter() { state.filterClient=null; document.getElementById('filterBar').classList.remove('visible'); renderSessions(); }
+function deleteSession(id) { state.sessions=state.sessions.filter(s=>s.id!==id); saveSessions(); updateAll(); showToast('Session deleted'); }
+function switchTab(tab) { state.activeTab=tab; document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); document.querySelector('.tab[data-tab="'+tab+'"]').classList.add('active'); renderSessions(); }
+// ============ SUMMARY ============
+function updateSummary() {
+  const n=new Date(),t=n.toISOString().slice(0,10),ws=new Date(n);ws.setDate(n.getDate()-n.getDay());const w=ws.toISOString().slice(0,10),m=n.toISOString().slice(0,7);
+  const tc=new Set(state.sessions.map(s=>s.client)).size,ts=state.sessions.reduce((a,s)=>a+(s.duration||0),0),te=state.sessions.reduce((a,s)=>a+(s.earnings||0),0);
+  document.getElementById('totalClients').textContent=tc;document.getElementById('totalHours').textContent=formatTime(ts);document.getElementById('totalEarnings').textContent=CURRENCY_SYMBOLS[state.currency]+te.toFixed(2);
+  const wS=state.sessions.filter(s=>s.date>=w&&s.date<=t);document.getElementById('weekEarnings').textContent=CURRENCY_SYMBOLS[state.currency]+wS.reduce((a,s)=>a+(s.earnings||0),0).toFixed(2);document.getElementById('weekHours').textContent=formatTime(wS.reduce((a,s)=>a+(s.duration||0),0));
+  const mS=state.sessions.filter(s=>s.date.startsWith(m));document.getElementById('monthEarnings').textContent=CURRENCY_SYMBOLS[state.currency]+mS.reduce((a,s)=>a+(s.earnings||0),0).toFixed(2);document.getElementById('monthHours').textContent=formatTime(mS.reduce((a,s)=>a+(s.duration||0),0));
+  const cl={};mS.forEach(s=>{if(!cl[s.client])cl[s.client]={hours:0,earnings:0};cl[s.client].hours+=s.duration||0;cl[s.client].earnings+=s.earnings||0;});
+  document.getElementById('clientSummaryBody').innerHTML=Object.entries(cl).map(([n,d])=>'<tr><td>'+escHtml(n)+'</td><td>'+formatTime(d.hours)+'</td><td>'+CURRENCY_SYMBOLS[state.currency]+d.earnings.toFixed(2)+'</td></tr>').join('');
+  updateSuggestions();updateInvoiceClientList();
 }
-
-function clearTimer(){
-  ts=null;document.getElementById('timerDisplay').textContent='00:00:00';document.getElementById('timerDisplay').className='timer-display';
-  document.getElementById('timerEarnings').textContent='';
-  document.getElementById('timerNotes').style.display='none';document.getElementById('sessionNotes').value='';
-  updateButtons();document.getElementById('clientInput').value='';document.getElementById('rateInput').value='';
-  svt()
+function updateAll(){renderPresets();renderSessions();updateSummary();}
+// ============ INVOICE ============
+function updateInvoiceClientList(){document.getElementById('invoiceClient').innerHTML=[...new Set(state.sessions.map(s=>s.client))].map(c=>'<option value="'+c+'">'+c+'</option>').join('');}
+function generateInvoice(){(function(){const b=document.getElementById('invoiceBusinessName').value.trim()||'Your Business',c=document.getElementById('invoiceClient').value,f=document.getElementById('invoiceFrom').value,t=document.getElementById('invoiceTo').value,tr=document.getElementById('invoiceTerms').value;const ss=state.sessions.filter(s=>s.client===c&&(!f||s.date>=f)&&(!t||s.date<=t));if(!ss.length){showToast('No sessions in range');return;}const ta=ss.reduce((a,s)=>a+(s.earnings||0),0),inv='INV-'+Date.now().toString(36).toUpperCase();let h='<html><head><meta charset="utf-8"><title>Invoice '+inv+'</title><style>body{font-family:system-ui,sans-serif;max-width:700px;margin:40px auto;padding:0 20px;color:#222}h1{font-size:24px;margin-bottom:4px}.meta{color:#666;font-size:14px;margin-bottom:20px}table{width:100%;border-collapse:collapse;margin:20px 0}th,td{text-align:left;padding:8px 0;border-bottom:1px solid #ddd;font-size:14px}th{color:#888;font-weight:500}.total{font-size:18px;font-weight:600;text-align:right;margin-top:10px}.footer{margin-top:40px;color:#888;font-size:12px}</style></head><body><h1>Invoice '+inv+'</h1><div class="meta">From: '+escHtml(b)+'<br>To: '+escHtml(c)+'<br>Period: '+(f||'—')+' to '+(t||'—')+'<br>Terms: Net '+tr+'</div><table><tr><th>Date</th><th>Hours</th><th>Rate</th><th>Amount</th></tr>';ss.forEach(s=>{const hrs=((s.duration||0)/3600).toFixed(2);h+='<tr><td>'+s.date+'</td><td>'+hrs+'</td><td>'+CURRENCY_SYMBOLS[state.currency]+s.rate+'/hr</td><td>'+CURRENCY_SYMBOLS[state.currency]+(s.earnings||0).toFixed(2)+'</td></tr>';});h+='</table><div class="total">Total: '+CURRENCY_SYMBOLS[state.currency]+ta.toFixed(2)+'</div><div class="footer">Thank you for your business.</div></body></html>';const w=window.open('','_blank');w.document.write(h);w.document.close();setTimeout(()=>{w.print()},500);toggleModal('invoiceModal');})();}
+// ============ EXPORT ============
+function exportBackup(){const d={sessions:state.sessions,presets:state.presets,exported:new Date().toISOString()};const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='bilang-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();showToast('Backup downloaded');}
+function importBackup(e){const f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(ev){try{const d=JSON.parse(ev.target.result);if(d.sessions)state.sessions=d.sessions;if(d.presets)state.presets=d.presets;saveSessions();savePresets();updateAll();showToast('Import successful');}catch(e){showToast('Invalid backup file');}};r.readAsText(f);}
+function exportCSV(){if(!state.sessions.length){showToast('No data to export');return;}let c='Client,Date,Duration (hrs),Rate,Earnings,Note,Status\n';state.sessions.forEach(s=>{const hrs=((s.duration||0)/3600).toFixed(2);c+='"'+s.client+'","'+s.date+'",'+hrs+','+s.rate+','+(s.earnings||0).toFixed(2)+',"'+((s.note)||'')+'","'+(s.status||'billable')+'"\n';});const b=new Blob([c],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='bilang-export-'+new Date().toISOString().slice(0,10)+'.csv';a.click();showToast('CSV exported');}
+function clearAllData(){if(!confirm('Delete all data? This cannot be undone.'))return;state.sessions=[];state.presets=[];saveSessions();savePresets();updateAll();showToast('All data cleared');}
+// ============ SETTINGS ============
+function saveCurrency(){state.currency=document.getElementById('currencySelect').value;localStorage.setItem('bilang_currency',state.currency);updateAll();}
+function saveDefaultRate(){const r=parseFloat(document.getElementById('defaultRateInput').value)||0;state.defaultRate=r;localStorage.setItem('bilang_defaultRate',r.toString());if(r)document.getElementById('rateInput').value=r;}
+// ============ UI HELPERS ============
+function showToast(msg){const e=document.getElementById('toast');e.textContent=msg;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2500);}
+function toggleModal(id){document.getElementById(id).classList.toggle('active');}
+function closeTutorial(){toggleModal('tutorialModal');}function showTutorial(){toggleModal('tutorialModal');}
+function toggleDark(){
+  state.darkMode=!state.darkMode;
+  document.body.classList.toggle('dark',state.darkMode);
+  localStorage.setItem('bilang_dark',state.darkMode?'1':'0');
+  document.getElementById('themeBtn').textContent=state.darkMode?'Theme · Dark':'Theme · Light';
 }
-
-// ============================================================
-// CLIENT FILTER
-// ============================================================
-let cf=null;
-function filterByClient(n){cf=n;document.getElementById('filterBar').classList.add('visible');document.getElementById('filterClientName').textContent=n;render()}
-function clearClientFilter(){cf=null;document.getElementById('filterBar').classList.remove('visible');render()}
-
-// ============================================================
-// TERMS
-// ============================================================
-function acceptTerms(){
-  localStorage.setItem(TAK,'1');
-  document.getElementById('termsModal').classList.remove('active');
-}
-
-// ============================================================
-// TUTORIAL
-// ============================================================
-function showTutorial(){toggleModal('tutorialModal')}
-function closeTutorial(){localStorage.setItem(TUK,'1');toggleModal('tutorialModal');setTimeout(()=>showToast('Got feedback? Click the 💬 Suggestions button!'),400)}
-
-// ============================================================
-// INVOICE
-// ============================================================
-function populateInvoiceClients(){
-  const sel=document.getElementById('invoiceClient');
-  const clients=[...new Set(data.sessions.filter(s=>s.status!=='cancelled').map(s=>s.client))].sort();
-  sel.innerHTML='<option value="">— Select a client —</option>'+clients.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
-  document.getElementById('invBizName').value=data.settings.businessName||'';
-  // Default date range: this month
-  const now=new Date();
-  document.getElementById('invoiceFrom').value=new Date(now.getFullYear(),now.getMonth(),1).toISOString().slice(0,10);
-  document.getElementById('invoiceTo').value=now.toISOString().slice(0,10);
-}
-
-function generateInvoice(){
-  const client=document.getElementById('invoiceClient').value;
-  const from=new Date(document.getElementById('invoiceFrom').value);
-  const to=new Date(document.getElementById('invoiceTo').value);
-  to.setHours(23,59,59,999);
-  const tmpl=document.getElementById('invoiceTemplate').value;
-
-  if(!client){showToast('Select a client');return}
-  if(!from||!to||isNaN(from)||isNaN(to)){showToast('Select a date range');return}
-
-  const sessions=data.sessions.filter(s=>s.client===client&&s.status!=='cancelled').filter(s=>{const d=new Date(s.timestamp);return d>=from&&d<=to}).sort((a,b)=>a.timestamp.localeCompare(b.timestamp));
-  if(!sessions.length){showToast('No sessions found for this period');return}
-
-  const cur=data.settings.currency;
-  const bizName=document.getElementById('invBizName').value.trim()||'Your Name';
-  const dueDays=parseInt(document.getElementById('invoiceDue').value);
-  const dueText=dueDays===0?'Due on receipt':`Payment due within ${dueDays} days`;
-  const totalSec=sessions.reduce((t,s)=>t+s.duration,0);
-  const totalAmt=sessions.reduce((t,s)=>t+(s.duration/3600)*s.rate,0);
-  const invNum='INV-'+Date.now().toString(36).toUpperCase();
-  const invDate=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
-  const fDate=from.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-  const tDate=to.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-
-  let rows=sessions.map((s,i)=>{
-    const d=new Date(s.timestamp).toLocaleDateString('en-US',{month:'short',day:'numeric'});
-    const hrs=fmtDec(s.duration);
-    const amt=((s.duration/3600)*s.rate).toFixed(2);
-    const note=s.notes?` — ${esc(s.notes)}`:'';
-    const lastRow=i===sessions.length-1?' style="border-bottom:2px solid #333"':'';
-    return `<tr${lastRow}><td>${d}</td><td>${esc(s.client)}${note}</td><td style="text-align:center">${hrs}</td><td style="text-align:right">${cur}${s.rate.toFixed(2)}</td><td style="text-align:right">${cur}${amt}</td></tr>`;
-  }).join('');
-
-  const rowVars={bizName,client,fDate,tDate,invNum,invDate,rows,cur,totalSec,totalAmt,dueText};
-  const html=getInvoiceHTML(tmpl,rowVars);
-
-  toggleModal('invoiceModal');
-  const w=window.open('','_blank');
-  w.document.write(html);
-  w.document.close();
-}
-
-function getInvoiceHTML(tmpl,v){
-  const t=(s)=>esc(s);
-  const h=(s,...v)=>s.reduce((a,c,i)=>a+c+(v[i]||''),'');
-  const templates={
-    professional: h`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invoice - ${t(v.client)}</title>
-<style>@page{margin:20mm 15mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Helvetica Neue',Arial,sans-serif;color:#222;font-size:11pt;line-height:1.5;padding:40px;max-width:800px;margin:0 auto}
-.header{display:flex;justify-content:space-between;align-items:start;margin-bottom:40px;padding-bottom:20px;border-bottom:3px solid #4361ee}.header .brand h1{font-size:22pt;color:#4361ee;margin-bottom:2px}.header .inv-info{text-align:right}.header .inv-info h2{font-size:16pt;color:#333;margin-bottom:4px}.header .inv-info p{font-size:9pt;color:#666}
-.billing{display:flex;justify-content:space-between;margin-bottom:30px}.billing div{font-size:10pt}.billing .label{color:#888;font-size:8pt;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}.billing .val{font-weight:600}
-table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:10pt}th{text-align:left;color:#888;font-size:8pt;text-transform:uppercase;letter-spacing:1px;padding:8px 4px;border-bottom:2px solid #ddd}td{padding:8px 4px;border-bottom:1px solid #eee}td:last-child,th:last-child{text-align:right}
-.totals{margin-left:auto;width:280px;margin-top:10px}.totals .row{display:flex;justify-content:space-between;padding:6px 0;font-size:10pt}.totals .row.total{border-top:2px solid #333;padding-top:8px;margin-top:4px;font-size:13pt;font-weight:700}
-.footer{margin-top:40px;padding-top:20px;border-top:1px solid #ddd;font-size:8pt;color:#888;text-align:center}.footer p{margin-bottom:2px}
-@media print{body{padding:0} .no-print{display:none}}</style></head><body>
-<div class="header"><div class="brand"><h1>${t(v.bizName)}</h1></div><div class="inv-info"><h2>INVOICE</h2><p>${v.invNum}</p><p>${v.invDate}</p></div></div>
-<div class="billing"><div><div class="label">Bill To</div><div class="val">${t(v.client)}</div></div><div><div class="label">Period</div><div class="val">${v.fDate} — ${v.tDate}</div></div></div>
-<table><thead><tr><th style="width:70px">Date</th><th>Description</th><th style="width:60px;text-align:center">Hours</th><th style="width:70px;text-align:right">Rate</th><th style="width:80px;text-align:right">Amount</th></tr></thead><tbody>${v.rows}</tbody></table>
-<div class="totals"><div class="row"><span>Total Hours</span><span>${fmtDec(v.totalSec)}</span></div><div class="row total"><span>Total Due</span><span>${v.cur}${v.totalAmt.toFixed(2)}</span></div></div>
-<div class="footer"><p>Thank you for your business!</p><p>${v.dueText}</p></div>
-<div class="no-print" style="text-align:center;margin-top:40px"><button onclick="window.print()" style="padding:10px 30px;background:#4361ee;color:#fff;border:none;border-radius:6px;font-size:11pt;cursor:pointer">📄 Save as PDF</button></div>
-<script>setTimeout(()=>window.print(),300)<\\/script></body></html>`,
-
-    minimal: h`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invoice - ${t(v.client)}</title>
-<style>@page{margin:22mm 18mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Helvetica Neue',Arial,sans-serif;color:#333;font-size:10.5pt;line-height:1.6;padding:40px;max-width:800px;margin:0 auto}
-.header{margin-bottom:36px;padding-bottom:16px;border-bottom:1px solid #ddd}.header h1{font-size:20pt;font-weight:300;color:#222;letter-spacing:2px;text-transform:uppercase;margin-bottom:2px}.header .meta{display:flex;justify-content:space-between;font-size:9pt;color:#999;margin-top:8px}
-.billing{margin-bottom:28px;display:flex;justify-content:space-between}.billing div{font-size:9.5pt}.billing .label{color:#aaa;font-size:7.5pt;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px}
-table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:9.5pt}th{text-align:left;color:#bbb;font-size:7.5pt;font-weight:400;text-transform:uppercase;letter-spacing:1.5px;padding:10px 4px 6px;border-bottom:1px solid #eee}td{padding:8px 4px;border-bottom:1px solid #f5f5f5;color:#555}td:last-child,th:last-child{text-align:right}
-.totals{margin-left:auto;width:260px}.totals .row{display:flex;justify-content:space-between;padding:5px 0;font-size:9.5pt;color:#555}.totals .row.total{border-top:1px solid #333;padding-top:8px;margin-top:4px;font-size:12pt;font-weight:600;color:#222}
-.footer{margin-top:36px;padding-top:16px;border-top:1px solid #eee;font-size:8pt;color:#bbb;text-align:center}
-@media print{body{padding:0} .no-print{display:none}}</style></head><body>
-<div class="header"><h1>Invoice</h1><div class="meta"><span>${t(v.bizName)}</span><span>${v.invNum}</span><span>${v.invDate}</span></div></div>
-<div class="billing"><div><div class="label">Bill To</div><div class="val">${t(v.client)}</div></div><div><div class="label">Period</div><div class="val">${v.fDate} — ${v.tDate}</div></div><div><div class="label">Payment</div><div class="val">${v.dueText}</div></div></div>
-<table><thead><tr><th style="width:70px">Date</th><th>Description</th><th style="width:60px;text-align:center">Hours</th><th style="width:70px;text-align:right">Rate</th><th style="width:80px;text-align:right">Amount</th></tr></thead><tbody>${v.rows}</tbody></table>
-<div class="totals"><div class="row"><span>Total Hours</span><span>${fmtDec(v.totalSec)}</span></div><div class="row total"><span>Total Due</span><span>${v.cur}${v.totalAmt.toFixed(2)}</span></div></div>
-<div class="footer"><p>Thank you for your business.</p></div>
-<div class="no-print" style="text-align:center;margin-top:40px"><button onclick="window.print()" style="padding:10px 30px;background:#4361ee;color:#fff;border:none;border-radius:6px;font-size:11pt;cursor:pointer">📄 Save as PDF</button></div>
-<script>setTimeout(()=>window.print(),300)<\\/script></body></html>`,
-
-    elegant: h`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invoice - ${t(v.client)}</title>
-<style>@page{margin:20mm 15mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Georgia,'Times New Roman',serif;color:#2a2a2a;font-size:11pt;line-height:1.6;padding:40px;max-width:800px;margin:0 auto;background:#fefcf8}
-.header{display:flex;justify-content:space-between;align-items:start;margin-bottom:36px;padding-bottom:24px;border-bottom:2px solid #d4a373}.header .brand h1{font-size:24pt;font-weight:400;color:#8b5a2b;letter-spacing:1px}.header .brand p{font-size:9pt;color:#b08968;font-style:italic}.header .inv-info{text-align:right}.header .inv-info h2{font-size:15pt;font-weight:400;color:#8b5a2b;letter-spacing:3px;text-transform:uppercase;margin-bottom:4px}.header .inv-info p{font-size:9pt;color:#b08968}
-.billing{background:#f6f0e8;padding:16px 20px;border-radius:6px;margin-bottom:28px;display:flex;justify-content:space-between}.billing div{font-size:10pt}.billing .label{color:#b08968;font-size:7.5pt;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:2px}.billing .val{font-weight:600;color:#5c3d1e}
-table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:10pt}th{text-align:left;color:#b08968;font-size:7.5pt;font-weight:400;text-transform:uppercase;letter-spacing:2px;padding:8px 4px;border-bottom:1px solid #e8d5c4}td{padding:10px 4px;border-bottom:1px solid #f0e6da;color:#4a3a2a}td:last-child,th:last-child{text-align:right}
-.totals{margin-left:auto;width:280px;margin-top:16px;padding:16px 20px;background:#f6f0e8;border-radius:6px}.totals .row{display:flex;justify-content:space-between;padding:5px 0;font-size:10pt;color:#5c3d1e}.totals .row.total{border-top:1px solid #d4a373;padding-top:8px;margin-top:4px;font-size:13pt;font-weight:700}
-.footer{margin-top:40px;padding-top:20px;border-top:1px solid #e8d5c4;font-size:8.5pt;color:#b08968;text-align:center;font-style:italic}
-@media print{body{padding:0} .no-print{display:none}}</style></head><body>
-<div class="header"><div class="brand"><h1>${t(v.bizName)}</h1></div><div class="inv-info"><h2>Invoice</h2><p>${v.invNum}</p><p>${v.invDate}</p></div></div>
-<div class="billing"><div><div class="label">Bill To</div><div class="val">${t(v.client)}</div></div><div><div class="label">Period</div><div class="val">${v.fDate} — ${v.tDate}</div></div><div><div class="label">Payment</div><div class="val">${v.dueText}</div></div></div>
-<table><thead><tr><th style="width:70px">Date</th><th>Description</th><th style="width:60px;text-align:center">Hours</th><th style="width:70px;text-align:right">Rate</th><th style="width:80px;text-align:right">Amount</th></tr></thead><tbody>${v.rows}</tbody></table>
-<div class="totals"><div class="row"><span>Total Hours</span><span>${fmtDec(v.totalSec)}</span></div><div class="row total"><span>Total Due</span><span>${v.cur}${v.totalAmt.toFixed(2)}</span></div></div>
-<div class="footer"><p>Thank you for your business.</p></div>
-<div class="no-print" style="text-align:center;margin-top:40px"><button onclick="window.print()" style="padding:10px 30px;background:#8b5a2b;color:#fff;border:none;border-radius:6px;font-size:11pt;cursor:pointer">📄 Save as PDF</button></div>
-<script>setTimeout(()=>window.print(),300)<\\/script></body></html>`,
-
-    modern: (s,c)=>modernTmpl('#1a2332','#8899aa','#556677','#ccddee','#fafbfc','#1a2332','#e0e4e8','#eef0f2','#1a2332','#e0e4e8')(s,c),
-    'modern-teal': (s,c)=>modernTmpl('#0d4f4f','#7abebe','#5a9e9e','#d0ecec','#f7fbfb','#0d4f4f','#c8e0e0','#e6f0f0','#0d4f4f','#c8e0e0')(s,c),
-    'modern-terracotta': (s,c)=>modernTmpl('#7a3b2e','#d4a89a','#c48d7c','#f0d5cc','#fdf9f7','#7a3b2e','#e8d5ce','#f0e4df','#7a3b2e','#e8d5ce')(s,c),
-
-    corporate: h`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invoice - ${t(v.client)}</title>
-<style>@page{margin:20mm 15mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Helvetica Neue',Arial,sans-serif;color:#222;font-size:10.5pt;line-height:1.5;padding:40px;max-width:800px;margin:0 auto}
-.top-stripe{background:#2c3e50;margin:-40px -40px 32px;padding:24px 40px;display:flex;justify-content:space-between;align-items:center}.top-stripe h1{font-size:16pt;font-weight:600;color:#fff;letter-spacing:2px;text-transform:uppercase}.top-stripe .stripe-ref{color:#8899aa;font-size:9pt}
-.info-bar{display:flex;justify-content:space-between;margin-bottom:28px;padding:16px 20px;background:#f8f9fa;border-radius:4px;border-left:4px solid #2c3e50}.info-bar div{font-size:9pt}.info-bar .lbl{color:#889;font-size:7pt;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}.info-bar .val{font-weight:600;color:#2c3e50}
-table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:9.5pt}th{text-align:left;background:#2c3e50;color:#fff;font-size:7.5pt;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;padding:10px 8px}th:first-child{border-radius:4px 0 0 4px}th:last-child{border-radius:0 4px 4px 0;text-align:right}
-td{padding:10px 8px;border-bottom:1px solid #e8eaed;color:#444}td:last-child{text-align:right}tr:nth-child(even){background:#fafbfc}
-.totals{margin-left:auto;width:260px}.totals .row{display:flex;justify-content:space-between;padding:6px 8px;font-size:9.5pt;color:#555}.totals .row.total{background:#2c3e50;color:#fff;padding:10px 8px;border-radius:4px;font-size:12pt;font-weight:700;margin-top:4px}
-.footer{margin-top:36px;padding-top:16px;border-top:1px solid #dde0e4;font-size:8pt;color:#889;text-align:center;display:flex;justify-content:space-between}
-@media print{body{padding:0} .no-print{display:none}}</style></head><body>
-<div class="top-stripe"><h1>Invoice</h1><div class="stripe-ref">${v.invNum}</div></div>
-<div class="info-bar"><div><div class="lbl">From</div><div class="val">${t(v.bizName)}</div></div><div><div class="lbl">Bill To</div><div class="val">${t(v.client)}</div></div><div><div class="lbl">Period</div><div class="val">${v.fDate} — ${v.tDate}</div></div><div><div class="lbl">Date</div><div class="val">${v.invDate}</div></div></div>
-<table><thead><tr><th style="width:70px">Date</th><th>Description</th><th style="width:60px;text-align:center">Hours</th><th style="width:70px;text-align:right">Rate</th><th style="width:80px;text-align:right">Amount</th></tr></thead><tbody>${v.rows}</tbody></table>
-<div class="totals"><div class="row"><span>Total Hours</span><span>${fmtDec(v.totalSec)}</span></div><div class="row total"><span>Total Due</span><span>${v.cur}${v.totalAmt.toFixed(2)}</span></div></div>
-<div class="footer"><span>${t(v.bizName)}</span><span>${v.dueText}</span><span>Thank you</span></div>
-<div class="no-print" style="text-align:center;margin-top:40px"><button onclick="window.print()" style="padding:10px 30px;background:#2c3e50;color:#fff;border:none;border-radius:6px;font-size:11pt;cursor:pointer">📄 Save as PDF</button></div>
-<script>setTimeout(()=>window.print(),300)<\\/script></body></html>`
-  };
-
-  function modernTmpl(sBg,sSub,sLbl,sVal,mBg,aClr,bdClr,rowBg,tClr,tBrd){
-    return (s,c)=>h`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invoice - ${c}</title>
-<style>@page{margin:0}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Arial,sans-serif;color:#333;font-size:10.5pt;line-height:1.5}.page{display:flex;min-height:100vh}
-.sidebar{width:220px;background:${sBg};color:#fff;padding:36px 24px;display:flex;flex-direction:column;justify-content:space-between;flex-shrink:0}.sidebar h1{font-size:18pt;font-weight:300;letter-spacing:1px;margin-bottom:4px}.sidebar .sub{font-size:8pt;color:${sSub};margin-bottom:32px}.sidebar .info{margin-bottom:24px}.sidebar .info .lbl{font-size:6.5pt;text-transform:uppercase;letter-spacing:2px;color:${sLbl};margin-bottom:2px}.sidebar .info .val{font-size:9pt;color:${sVal}}.sidebar .footer-info{font-size:7pt;color:${sLbl}}
-.main{flex:1;padding:36px 40px;background:${mBg}}.main .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:32px}.main .top h2{font-size:14pt;font-weight:600;color:${aClr};letter-spacing:1px;text-transform:uppercase}.main .top .inv-ref{text-align:right;font-size:9pt;color:#889}
-table{width:100%;border-collapse:collapse;margin-bottom:24px;font-size:9.5pt}th{text-align:left;color:${sLbl};font-size:7pt;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;padding:8px 4px;border-bottom:1px solid ${bdClr}}td{padding:10px 4px;border-bottom:1px solid ${rowBg};color:#444}td:last-child,th:last-child{text-align:right}
-.totals{margin-left:auto;width:260px;background:#fff;padding:16px 20px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.04)}.totals .row{display:flex;justify-content:space-between;padding:5px 0;font-size:9.5pt;color:#555}.totals .row.total{border-top:1px solid ${tClr};padding-top:8px;margin-top:4px;font-size:12pt;font-weight:700;color:${tClr}}
-@media print{.sidebar{position:fixed;top:0;left:0;bottom:0;width:220px;height:100vh}.main{margin-left:220px;padding:36px 40px}.totals{box-shadow:none;border:1px solid ${tBrd}} .no-print{display:none}}</style></head><body>
-<div class="page"><div class="sidebar"><div><h1>${t(s.bizName)}</h1><div class="sub">Invoice</div><div class="info"><div class="lbl">Client</div><div class="val">${c}</div></div><div class="info"><div class="lbl">Period</div><div class="val">${s.fDate} — ${s.tDate}</div></div><div class="info"><div class="lbl">Payment</div><div class="val">${s.dueText}</div></div></div><div class="footer-info">${s.invNum}</div></div>
-<div class="main"><div class="top"><h2>Invoice</h2><div class="inv-ref">${s.invDate}</div></div>
-<table><thead><tr><th style="width:70px">Date</th><th>Description</th><th style="width:60px;text-align:center">Hours</th><th style="width:70px;text-align:right">Rate</th><th style="width:80px;text-align:right">Amount</th></tr></thead><tbody>${s.rows}</tbody></table>
-<div class="totals"><div class="row"><span>Total Hours</span><span>${fmtDec(s.totalSec)}</span></div><div class="row total"><span>Total Due</span><span>${s.cur}${s.totalAmt.toFixed(2)}</span></div></div></div></div>
-<div class="no-print" style="text-align:center;margin-top:20px"><button onclick="window.print()" style="padding:10px 30px;background:${aClr};color:#fff;border:none;border-radius:6px;font-size:11pt;cursor:pointer;margin-bottom:20px">📄 Save as PDF</button></div>
-<script>setTimeout(()=>window.print(),300)<\\/script></body></html>`;
-  }
-
-  const fn=templates[tmpl]||templates.professional;
-  return typeof fn==='function'?fn(v,t(v.client)):fn;
-}
-
-// ============================================================
-// RENDER
-// ============================================================
-function render(){renderStats();renderSessions();renderPresets();updateButtons()}
-function renderStats(){
-  const completed=data.sessions.filter(s=>s.status!=='cancelled');
-  const cs=new Set(completed.map(s=>s.client));const ts=completed.reduce((s,x)=>s+x.duration,0);
-  const te=completed.reduce((s,x)=>s+(x.duration/3600)*x.rate,0);
-  document.getElementById('totalClients').textContent=cs.size;document.getElementById('totalHours').textContent=fmt(ts);
-  document.getElementById('totalEarnings').textContent=data.settings.currency+te.toFixed(0);
-}
-
-function renderSessions(){
-  const c=document.getElementById('sessionList'),t=document.querySelector('.tab.active')?.dataset.tab||'today';
-  const td=new Date();td.setHours(0,0,0,0);const tm=new Date(td.getTime()+86400000);
-  let l=[...data.sessions].sort((a,b)=>b.timestamp.localeCompare(a.timestamp));
-  if(cf)l=l.filter(s=>s.client===cf);
-  if(t==='today')l=l.filter(s=>{const d=new Date(s.timestamp);return d>=td&&d<tm});
-  if(!l.length){const m=cf?`No sessions for "${cf}".`:t==='today'?'No sessions today.':'No sessions yet.';c.innerHTML=`<div class="empty-state"><div class="icon">🕐</div><p>${m}</p></div>`;return}
-  c.innerHTML=l.map(s=>{
-    const hrs=s.duration/3600,earn=hrs*s.rate,st=new Date(s.start).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-    const sd=new Date(s.timestamp).toLocaleDateString([],{month:'short',day:'numeric'});
-    const statusBadge=s.status==='cancelled'?' <span style="color:var(--danger);font-size:.7rem">✕ Cancelled</span>':'';
-    return `<div class="session-card" style="${s.status==='cancelled'?'opacity:.55':''}"><div class="session-info" onclick="filterByClient('${esc(s.client)}')"><div class="client"><span class="client-link">🔵 ${esc(s.client)}</span> <span class="rate-badge">${data.settings.currency}${s.rate}/hr</span></div><div class="meta">${sd} ${st} · ${fmtShort(s.duration)} · ${data.settings.currency}${earn.toFixed(2)}${statusBadge}</div>${s.notes?`<div class="note-preview">📝 ${esc(s.notes)}</div>`:''}</div><div class="session-actions"><button class="btn btn-outline btn-xs" onclick="event.stopPropagation();editSession('${s.id}')\">✏️</button><button class="btn btn-outline btn-xs" onclick="event.stopPropagation();deleteSession('${s.id}')\">🗑</button></div></div>`
-  }).join('');
-}
-
-function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML}
-function switchTab(n){document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===n));renderSessions()}
-
-// ============================================================
-// SESSION ACTIONS
-// ============================================================
-function deleteSession(id){if(!confirm('Delete?'))return;data.sessions=data.sessions.filter(s=>s.id!==id);sv();render();showToast('Deleted')}
-let eid=null;
-function editSession(id){const s=data.sessions.find(x=>x.id===id);if(!s)return;eid=id;document.getElementById('editClient').value=s.client;const d=new Date(s.timestamp);document.getElementById('editDate').value=d.toISOString().slice(0,10);document.getElementById('editDurationDisplay').textContent=fmtShort(s.duration)+' ('+Math.round(s.duration/60)+' min)';document.getElementById('editRateDisplay').textContent=data.settings.currency+s.rate+'/hr';document.getElementById('editStatus').value=s.status||'completed';document.getElementById('editNotes').value=s.notes||'';toggleModal('editModal')}
-function saveEditSession(){if(!eid)return;const s=data.sessions.find(x=>x.id===eid);if(!s)return;s.client=document.getElementById('editClient').value.trim();s.status=document.getElementById('editStatus').value;s.notes=document.getElementById('editNotes').value.trim();const nd=document.getElementById('editDate').value;if(nd){const o=new Date(s.timestamp);const d=new Date(nd+'T'+o.toTimeString().slice(0,5));s.timestamp=d.toISOString();s.start=d.getTime()-s.duration*1000;s.end=d.getTime()}sv();render();toggleModal('editModal');showToast('Updated')}
-
-// ============================================================
-// SETTINGS / MODALS
-// ============================================================
-function toggleModal(id){
-  const el=document.getElementById(id);el.classList.toggle('active');
-  if(id==='settingsModal'&&el.classList.contains('active')){
-    document.getElementById('defaultRate').value=data.settings.defaultRate;
-    document.getElementById('currencySelect').value=data.settings.currency;
-    document.getElementById('invoiceBusinessName').value=data.settings.businessName||'';
-    document.getElementById('invoiceEmail').value=data.settings.businessEmail||'';
-    renderPresetEditor()
-  }
-  if(id==='summaryModal'&&el.classList.contains('active'))renderSummary()
-  if(id==='invoiceModal'&&el.classList.contains('active'))populateInvoiceClients()
-}
-function saveSettings(){
-  const rate=parseFloat(document.getElementById('defaultRate').value),cur=document.getElementById('currencySelect').value;
-  if(isNaN(rate)||rate<0){showToast('Enter valid rate');return}
-  data.settings.defaultRate=rate;data.settings.currency=cur;
-  data.settings.businessName=document.getElementById('invoiceBusinessName').value.trim();
-  data.settings.businessEmail=document.getElementById('invoiceEmail').value.trim();
-  document.getElementById('rateInput').placeholder=cur+'/hr';
-  const ps=data.presets||[];
-  for(let i=0;i<ps.length;i++){const n=document.getElementById(`pe_n_${i}`)?.value?.trim();const r=parseFloat(document.getElementById(`pe_r_${i}`)?.value);if(n&&!isNaN(r)&&r>=0){ps[i].name=n;ps[i].rate=r}}
-  data.presets=ps.filter(p=>p.name);sv();render();toggleModal('settingsModal');showToast('Settings saved')
-}
-
-// ============================================================
-// DARK MODE
-// ============================================================
-function toggleDark(){data.settings.darkMode=!data.settings.darkMode;applyDark();sv()}
-function applyDark(){document.body.classList.toggle('dark',data.settings.darkMode);document.getElementById('darkToggle').textContent=data.settings.darkMode?'☀️':'🌙'}
-
-// ============================================================
-// SUMMARY
-// ============================================================
-function renderSummary(){
-  const n=new Date(),dow=n.getDay(),mon=new Date(n);mon.setDate(n.getDate()-(dow===0?6:dow-1));mon.setHours(0,0,0,0);
-  const sun=new Date(mon);sun.setDate(mon.getDate()+7);const ms=new Date(n.getFullYear(),n.getMonth(),1),me=new Date(n.getFullYear(),n.getMonth()+1,1);
-  const ws=data.sessions.filter(s=>{const d=new Date(s.timestamp);return d>=mon&&d<sun&&s.status!=='cancelled'});
-  const msess=data.sessions.filter(s=>{const d=new Date(s.timestamp);return d>=ms&&d<me&&s.status!=='cancelled'});
-  const wsec=ws.reduce((t,s)=>t+s.duration,0),wern=ws.reduce((t,s)=>t+(s.duration/3600)*s.rate,0);
-  const msec=msess.reduce((t,s)=>t+s.duration,0),mern=msess.reduce((t,s)=>t+(s.duration/3600)*s.rate,0);
-  document.getElementById('weekEarnings').textContent=data.settings.currency+wern.toFixed(0);
-  document.getElementById('weekHours').textContent=fmtShort(wsec);
-  document.getElementById('monthEarnings').textContent=data.settings.currency+mern.toFixed(0);
-  document.getElementById('monthHours').textContent=fmtShort(msec);
-  const bc={};msess.forEach(s=>{if(!bc[s.client])bc[s.client]={sec:0,earn:0};bc[s.client].sec+=s.duration;bc[s.client].earn+=(s.duration/3600)*s.rate});
-  document.getElementById('clientSummaryBody').innerHTML=
-    Object.entries(bc).sort((a,b)=>b[1].earn-a[1].earn).map(([name,v])=>`<tr><td><a href="#" class="client-click" onclick="event.preventDefault();toggleModal('summaryModal');filterByClient('${esc(name)}')">🔵 ${esc(name)}</a></td><td>${fmtShort(v.sec)}</td><td>${data.settings.currency}${v.earn.toFixed(2)}</td></tr>`).join('');
-}
-
-// ============================================================
-// EXPORT
-// ============================================================
-function exportAllCSV(){if(!data.sessions.length){showToast('No data');return}let c='Date,Client,Duration (min),Duration (hrs),Rate,Earnings,Notes,Status\n';data.sessions.sort((a,b)=>a.timestamp.localeCompare(b.timestamp)).forEach(s=>{const d=new Date(s.timestamp).toLocaleDateString();c+=`"${d}","${s.client}",${Math.round(s.duration/60)},${(s.duration/3600).toFixed(2)},${s.rate},${((s.duration/3600)*s.rate).toFixed(2)},"${(s.notes||'').replace(/"/g,'""')}","${s.status||'completed'}"\n`});dl(c,'bilang-export.csv','text/csv');showToast('CSV downloaded')}
-function exportJSON(){dl(JSON.stringify(data,null,2),'bilang-backup.json','application/json');showToast('Backup downloaded')}
-function importJSON(){document.getElementById('importFile').click()}
-function handleImport(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const imp=JSON.parse(ev.target.result);if(!imp.sessions){showToast('Invalid backup');return}if(confirm(`Merge ${imp.sessions.length} sessions? (Cancel to replace)`)){data.sessions=[...data.sessions,...imp.sessions];data.clientRates={...data.clientRates,...(imp.clientRates||{})};data.presets=[...data.presets,...(imp.presets||[])];if(imp.settings)data.settings={...data.settings,...imp.settings}}else data=imp;sv();render();showToast(`Imported ${imp.sessions.length} sessions`)}catch{showToast('Error reading file')}};r.readAsText(f);e.target.value=''}
-function clearAllData(){if(!confirm('Delete ALL data? Cannot be undone.'))return;if(!confirm('Sure?'))return;data=dd();data.settings.darkMode=document.body.classList.contains('dark');sv();render();toggleModal('exportModal');showToast('Cleared')}
-function dl(c,n,m){const b=new Blob([c],{type:m}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=n;document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(u),1000)}
-
-// ============================================================
-// TOAST
-// ============================================================
-let tt;function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),3000)}
-
-// ============================================================
-// KEYBOARD
-// ============================================================
-document.getElementById('clientInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();if(ts?.running)stopTimer();else startTimer()}});
-document.getElementById('clientInput').addEventListener('input',()=>{const n=document.getElementById('clientInput').value.trim();if(data.clientRates[n])document.getElementById('rateInput').value=data.clientRates[n];updateButtons()});
-
-// ============================================================
-// PERIODIC
-// ============================================================
-setInterval(()=>{if(ts?.running){updateDisplay();svt()}},500);
-
-// ============================================================
-// INIT
-// ============================================================
-applyDark();document.getElementById('rateInput').placeholder=data.settings.currency+'/hr';
-if(localStorage.getItem(WK))document.getElementById('warningBanner').classList.add('hidden');
-// Show terms on first visit (blocking)
-if(!localStorage.getItem(TAK)){
-  document.getElementById('termsModal').classList.add('active');
-} else if(!localStorage.getItem(TUK)){
-  showTutorial();
-}
-
-const s=ldt();
-if(s){
-  ts=s;
-  const hasElapsed=ts.elapsed>5;
-  if(hasElapsed&&!ts.running){
-    showUnfinishedBanner(ts)
-  } else {
-    if(ts.running){ts.startTime=Date.now()}
-    document.getElementById('clientInput').value=ts.client||'';
-    document.getElementById('rateInput').value=data.clientRates[ts.client]||data.settings.defaultRate;
-    updateDisplay()
-  }
-}
-render();
+function updateSuggestions(){document.getElementById('clientSuggestions').innerHTML=[...new Set(state.sessions.map(s=>s.client))].map(c=>'<option value="'+c+'">').join('');}
+// Close modals on backdrop click
+document.querySelectorAll('.modal-overlay').forEach(function(el){el.addEventListener('click',function(e){if(e.target===this)this.classList.remove('active');});});
+function formatTime(sec){if(!sec||sec<0)return'0:00';const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;if(h>0)return h+':'+m.toString().padStart(2,'0')+':'+s.toString().padStart(2,'0');return m+':'+s.toString().padStart(2,'0');}
+function escHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+// ============ INIT ============
+loadState();updateAll();const d=new Date();document.getElementById('invoiceTo').value=d.toISOString().slice(0,10);d.setDate(1);document.getElementById('invoiceFrom').value=d.toISOString().slice(0,10);updateSuggestions();
 </script>
 </body>
 </html>
