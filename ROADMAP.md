@@ -1,12 +1,10 @@
 # Bilang — Roadmap
 
-Backlog for next iteration. Prioritized roughly top-to-bottom.
+## Next Up
+- [ ] **📄 Invoice-ready PDF** — print-styled HTML page with billable sessions per client/date range. Users Cmd+P → Save as PDF. All data already exists (client, rate, hours, earnings)
+- [ ] **⏸ Idle detection** — if timer's running and no mouse/keyboard activity for 5+ minutes, auto-pause and toast "Still working? Resume or discard." Prevents accidental 3-hour sessions
 
-## Medium
-- [ ] **Earnings rate in Settings** — a default hourly rate that feeds into an "earnings today" stat. Currently shows hours but not ₱/day earned.
-- [ ] **Dark mode toggle** — already mostly supported via CSS variables, just needs a permanent toggle somewhere visible
-- [ ] **Keyboard shortcuts** — `Space` for start/pause, `D` for done, `Esc` to cancel. Small QoL.
-
-## Low / Polish
-- [ ] **Session duration warning** — if the timer's been running >8 hours without a done, show a toast suggesting to wrap up
-- [ ] **GCash QR placeholder** — replace `gcash-qr.jpg` with actual QR when donation page is ready
+## Polish
+- [ ] **Dark mode toggle** — already works, just needs a persistent visible toggle
+- [ ] **Keyboard shortcuts** — `Space` for start/pause, `D` for done, `Esc` to cancel
+- [ ] **Session duration warning** — if timer runs >8 hours, suggest wrapping up
