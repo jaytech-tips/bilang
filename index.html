@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Client Clock – Track Your Freelance Hours</title>
+<style>
+  :root {
+    --bg: #f8f9fc; --card: #fff; --text: #1a1a2e; --muted: #6c757d;
+    --muted-bg: #e9ecef; --primary: #4361ee; --primary-hover: #3651d4;
+    --danger: #ef476f; --success: #06d6a0; --warning: #ffd166;
+    --border: #e2e8f0; --radius: 12px; --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06); --overlay: rgba(0,0,0,0.4);
+    --input-bg: #fff; --hover-bg: #f1f3f5;
+    --warn-bg: #fff8e1; --warn-border: #ffe082; --warn-text: #735f00;
+    --pomodoro: #e63946;
+  }
+  .dark {
+    --bg: #121826; --card: #1e2433; --text: #e8e8f0; --muted: #8888aa;
+    --muted-bg: #2a3040; --border: #2a3040; --shadow: 0 1px 3px rgba(0,0,0,0.2);
+    --overlay: rgba(0,0,0,0.6); --input-bg: #2a3040; --hover-bg: #2a3040;
+    --warn-bg: #2a2810; --warn-border: #554a10; --warn-text: #d4b84a;
+    --pomodoro: #ff6b6b;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body {
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    background:var(--bg);color:var(--text);padding:16px;min-height:100vh;line-height:1.5;
+    transition:background .2s,color .2s;
+  }
+  .container{max-width:800px;margin:0 auto}
+
+  /* Warning */
+  .warning-banner{display:flex;align-items:center;gap:10px;background:var(--warn-bg);border:1px solid var(--warn-border);color:var(--warn-text);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px;font-size:.8rem;line-height:1.4}
+  .warning-banner .warn-icon{font-size:1.1rem;flex-shrink:0}
+  .warning-banner .warn-text{flex:1}
+  .warning-banner .warn-dismiss{background:none;border:none;cursor:pointer;color:var(--warn-text);font-size:1.1rem;padding:2px;opacity:.6}
+  .warning-banner .warn-dismiss:hover{opacity:1}
+  .warning-banner.hidden{display:none}
+
+  /* Unfinished session banner */
+  .unfinished-banner{background:var(--warn-bg);border:2px solid var(--warn-border);border-radius:var(--radius);padding:12px 16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+  .unfinished-banner.hidden{display:none}
+  .unfinished-content{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .unfinished-icon{font-size:1.3rem;flex-shrink:0}
+  .unfinished-text{flex:1;font-size:.85rem;line-height:1.4;color:var(--warn-text);min-width:200px}
+  .unfinished-actions{display:flex;gap:6px;flex-shrink:0}
+  .unfinished-actions .btn{font-size:.75rem;padding:5px 12px}
+
+  /* Header */
+  header{display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid var(--border);margin-bottom:16px}
+  .header-left{display:flex;align-items:center;gap:10px}
+  .header-left .clock-icon{width:32px;height:32px;border:2px solid var(--primary);border-radius:50%;position:relative;flex-shrink:0}
+  .header-left .clock-icon::before{content:'';position:absolute;top:50%;left:50%;width:10px;height:10px;background:var(--primary);border-radius:50%;transform:translate(-50%,-50%)}
+  .header-left .clock-icon .hand{position:absolute;bottom:50%;left:50%;background:var(--primary);border-radius:2px;transform-origin:bottom center}
+  .header-left h1{font-size:1.25rem;font-weight:700}
+  .header-left h1 small{font-size:.65rem;font-weight:400;color:var(--muted);display:block}
+  .header-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+
+  .btn-tutorial{background:var(--primary);color:#fff;border:none;border-radius:var(--radius-sm);padding:6px 12px;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+  .btn-tutorial:hover{background:var(--primary-hover);transform:translateY(-1px)}
+
+  /* Mode toggle */
+  .mode-toggle{display:flex;gap:4px;margin-bottom:10px;justify-content:center}
+  .mode-btn{background:var(--card);border:2px solid var(--border);border-radius:8px;padding:5px 16px;font-size:.8rem;font-weight:600;cursor:pointer;transition:all .15s;color:var(--muted)}
+  .mode-btn.active{color:var(--text);border-color:var(--primary)}
+  .mode-btn[data-mode="pomodoro"].active{border-color:var(--pomodoro);color:var(--pomodoro)}
+
+  /* Client presets */
+  .presets{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;justify-content:center}
+  .preset-btn{padding:5px 14px;border:1px solid var(--border);border-radius:20px;background:var(--card);color:var(--text);font-size:.78rem;font-weight:500;cursor:pointer;transition:all .15s;box-shadow:var(--shadow)}
+  .preset-btn:hover{border-color:var(--primary);color:var(--primary);background:var(--hover-bg);transform:translateY(-1px)}
+  .preset-btn .preset-rate{color:var(--muted);font-size:.7rem;font-weight:400}
+  .preset-add-btn{border-style:dashed;opacity:.7}
+  .preset-add-btn:hover{opacity:1;border-color:var(--success);color:var(--success)}
+
+  /* Filter bar */
+  .filter-bar{display:none;align-items:center;gap:8px;padding:8px 12px;background:var(--card);border:1px solid var(--primary);border-radius:var(--radius-sm);margin-bottom:10px;font-size:.85rem;box-shadow:var(--shadow)}
+  .filter-bar.visible{display:flex}
+  .filter-bar .client-name{font-weight:600;color:var(--primary)}
+  .filter-bar .clear-filter{background:none;border:none;cursor:pointer;color:var(--danger);font-size:.8rem;font-weight:600;margin-left:auto}
+
+  /* Stats */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center;box-shadow:var(--shadow)}
+  .stat-card .value{font-size:1.5rem;font-weight:700;color:var(--primary)}
+  .stat-card .label{font-size:.7rem;color:var(--muted);margin-top:2px}
+
+  /* Timer */
+  .timer-section{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center;margin-bottom:14px;box-shadow:var(--shadow)}
+  .timer-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:12px}
+  .timer-row input,.timer-row select{padding:10px 14px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:.95rem;outline:none;background:var(--input-bg);color:var(--text);transition:border .2s,background .2s,color .2s}
+  .timer-row input:focus{border-color:var(--primary)}
+  .timer-row .client-input{width:220px}
+  .timer-row .rate-input{width:100px;text-align:center}
+  .timer-display{font-size:3rem;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:2px;margin-bottom:4px;transition:color .2s}
+  .timer-display.running{color:var(--success)}
+  .timer-display.paused{color:var(--warning)}
+  .timer-display.pomodoro-work{color:var(--pomodoro)}
+  .timer-display.pomodoro-break{color:var(--success)}
+  .timer-earnings{font-size:.85rem;color:var(--muted);margin-bottom:12px;min-height:1.2em}
+  .timer-earnings.running{color:var(--success);font-weight:600}
+  .pomodoro-info{font-size:.8rem;color:var(--muted);margin-bottom:8px;min-height:1.2em}
+  .pomodoro-info .pomodoro-cycle{font-weight:600;color:var(--pomodoro)}
+  .pomodoro-info .pomodoro-type{font-weight:600}
+  .pomodoro-info .pomodoro-type.work{color:var(--pomodoro)}
+  .pomodoro-info .pomodoro-type.break{color:var(--success)}
+
+  /* Pomodoro progress bar */
+  .pomodoro-progress{height:4px;background:var(--border);border-radius:2px;margin-bottom:12px;overflow:hidden;display:none}
+  .pomodoro-progress.visible{display:block}
+  .pomodoro-progress .fill{height:100%;border-radius:2px;transition:width .3s linear}
+  .pomodoro-progress .fill.work{background:var(--pomodoro)}
+  .pomodoro-progress .fill.break{background:var(--success)}
+
+  .btn{padding:10px 22px;border:none;border-radius:var(--radius-sm);font-size:.9rem;font-weight:600;cursor:pointer;transition:all .15s}
+  .btn:hover{transform:translateY(-1px);opacity:.9}
+  .btn:active{transform:translateY(0)}
+  .btn-primary{background:var(--primary);color:#fff}
+  .btn-primary:hover{background:var(--primary-hover)}
+  .btn-danger{background:var(--danger);color:#fff}
+  .btn-success{background:var(--success);color:#fff}
+  .btn-warning{background:var(--warning);color:#1a1a2e}
+  .btn-pomodoro{background:var(--pomodoro);color:#fff}
+  .btn-pomodoro:hover{opacity:.9;transform:translateY(-1px)}
+  .btn-outline{background:transparent;border:2px solid var(--border);color:var(--text)}
+  .btn-outline:hover{border-color:var(--primary);color:var(--primary)}
+  .btn-sm{padding:6px 12px;font-size:.8rem}
+  .btn-xs{padding:4px 8px;font-size:.7rem}
+  .btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+  .icon-btn{background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;cursor:pointer;color:var(--muted);font-size:1.1rem;transition:all .15s;line-height:1}
+  .icon-btn:hover{background:var(--hover-bg);color:var(--text)}
+
+  /* Tabs */
+  .tabs{display:flex;gap:0;margin-bottom:12px;border-bottom:1px solid var(--border)}
+  .tab{padding:8px 18px;cursor:pointer;font-size:.85rem;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;transition:all .15s;background:none;border-top:none;border-left:none;border-right:none}
+  .tab:hover{color:var(--text)}
+  .tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+
+  /* Session list */
+  .section-title{font-size:1rem;font-weight:600;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+  .session-list{margin-bottom:20px}
+  .session-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;box-shadow:var(--shadow)}
+  .session-card:hover{border-color:var(--primary)}
+  .session-info{flex:1;min-width:0;cursor:pointer}
+  .session-info .client{font-weight:600;font-size:.9rem;display:flex;align-items:center;gap:6px}
+  .session-info .client .client-link{color:var(--text);text-decoration:none;border-bottom:1px dashed var(--border);cursor:pointer}
+  .session-info .client .client-link:hover{color:var(--primary);border-bottom-color:var(--primary)}
+  .session-info .client .rate-badge{font-size:.65rem;font-weight:700;color:var(--success);background:rgba(6,214,160,.1);padding:1px 6px;border-radius:4px}
+  .session-info .meta{font-size:.75rem;color:var(--muted);margin-top:2px}
+  .session-info .note-preview{font-size:.75rem;color:var(--muted);margin-top:1px;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:300px}
+  .session-actions{display:flex;gap:4px;flex-shrink:0}
+  .empty-state{text-align:center;padding:40px 20px;color:var(--muted)}
+  .empty-state .icon{font-size:2rem;margin-bottom:8px}
+
+  /* Summary */
+  .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+  .summary-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
+  .summary-card h3{font-size:.8rem;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+  .summary-card .big{font-size:1.5rem;font-weight:700;color:var(--primary)}
+  .summary-card .sub{font-size:.75rem;color:var(--muted);margin-top:2px}
+  .summary-table{width:100%;border-collapse:collapse;font-size:.8rem}
+  .summary-table th{text-align:left;color:var(--muted);font-weight:600;padding:4px 0;border-bottom:1px solid var(--border)}
+  .summary-table td{padding:4px 0;border-bottom:1px solid var(--border)}
+  .summary-table tr:last-child td{border-bottom:none}
+  .summary-table .client-click{color:var(--text);text-decoration:none;border-bottom:1px dashed var(--border);cursor:pointer}
+  .summary-table .client-click:hover{color:var(--primary);border-bottom-color:var(--primary)}
+
+  /* Tutorial */
+  .tutorial-step{display:flex;gap:12px;margin-bottom:16px}
+  .tutorial-step:last-child{margin-bottom:0}
+  .tutorial-num{width:28px;height:28px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;flex-shrink:0}
+  .tutorial-step h4{font-size:.9rem;margin-bottom:2px}
+  .tutorial-step p{font-size:.8rem;color:var(--muted);line-height:1.5}
+
+  /* Modal */
+  .modal-overlay{display:none;position:fixed;inset:0;background:var(--overlay);z-index:100;align-items:center;justify-content:center;padding:16px}
+  .modal-overlay.active{display:flex}
+  .modal{background:var(--card);border-radius:var(--radius);padding:24px;width:100%;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,.15);max-height:90vh;overflow-y:auto}
+  .modal h2{font-size:1.05rem;margin-bottom:16px}
+  .modal label{display:block;font-size:.8rem;font-weight:600;margin-bottom:3px;color:var(--muted)}
+  .modal input,.modal textarea,.modal select{width:100%;padding:9px 12px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:.9rem;margin-bottom:10px;outline:none;background:var(--input-bg);color:var(--text);font-family:inherit}
+  .modal input:focus,.modal textarea:focus{border-color:var(--primary)}
+  .modal textarea{resize:vertical;min-height:60px}
+  .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
+  .modal option{background:var(--card);color:var(--text)}
+
+  /* Toast */
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:#fff;padding:10px 22px;border-radius:var(--radius-sm);font-size:.85rem;opacity:0;transition:all .3s;z-index:200;pointer-events:none;white-space:nowrap}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media(max-width:480px){
+    body{padding:10px}.stats{grid-template-columns:1fr;gap:6px}.stat-card{padding:10px}.stat-card .value{font-size:1.3rem}
+    .timer-display{font-size:2.2rem}.timer-row .client-input{width:100%}
+    .session-card{flex-direction:column;align-items:stretch}.session-info{cursor:default}
+    .session-actions{justify-content:flex-end}.summary-grid{grid-template-columns:1fr}
+    header{flex-wrap:wrap;gap:8px}.tabs{overflow-x:auto}.btn{padding:8px 16px}
+    .header-actions .btn-tutorial{font-size:.7rem;padding:4px 8px}
+    .presets{gap:4px}.preset-btn{font-size:.7rem;padding:4px 10px}
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Warning -->
+  <div class="warning-banner" id="warningBanner">
+    <span class="warn-icon">⚠️</span>
+    <span class="warn-text">
+      <strong>Under development.</strong> Data is saved in browser storage.
+      Clearing cache erases everything. <strong>Always export a backup</strong> (📥).
+    </span>
+    <button class="warn-dismiss" onclick="dismissWarning()" title="Dismiss">✕</button>
+  </div>
+
+  <!-- Unfinished session banner -->
+  <div class="unfinished-banner hidden" id="unfinishedBanner">
+    <div class="unfinished-content">
+      <span class="unfinished-icon">⏸️</span>
+      <span class="unfinished-text">
+        <strong>Unfinished session</strong> for <span id="unfinishedClient"></span>
+        (<span id="unfinishedDuration"></span>) —
+        <span id="unfinishedSince"></span>
+      </span>
+      <div class="unfinished-actions">
+        <button class="btn btn-primary btn-sm" onclick="resumeUnfinished()">▶ Resume</button>
+        <button class="btn btn-danger btn-sm" onclick="cancelUnfinished()">✕ Cancel</button>
+        <button class="btn btn-outline btn-sm" onclick="dismissUnfinished()">✖</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <div class="header-left">
+      <div class="clock-icon">
+        <div class="hand" style="width:2px;height:10px;transform:translateX(-50%) rotate(30deg)"></div>
+        <div class="hand" style="width:2px;height:14px;transform:translateX(-50%) rotate(-60deg)"></div>
+      </div>
+      <div>
+        <h1>Client Clock <small>Track billable hours per client</small></h1>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-tutorial" onclick="showTutorial()">📖 How to Use</button>
+      <button class="icon-btn" onclick="toggleDark()" title="Dark/Light" id="darkToggle">🌙</button>
+      <button class="icon-btn" onclick="toggleModal('summaryModal')" title="Summary">📊</button>
+      <button class="icon-btn" onclick="toggleModal('settingsModal')" title="Settings">⚙️</button>
+      <button class="icon-btn" onclick="toggleModal('exportModal')" title="Export/Backup">📥</button>
+      <button class="icon-btn" onclick="toggleModal('feedbackModal')" title="Suggestions">💬</button>
+    </div>
+  </header>
+
+  <!-- Mode Toggle -->
+  <div class="mode-toggle">
+    <button class="mode-btn active" data-mode="free" onclick="setMode('free')">⏱ Free Timer</button>
+    <button class="mode-btn" data-mode="pomodoro" onclick="setMode('pomodoro')">🍅 Pomodoro</button>
+  </div>
+
+  <!-- Client Presets -->
+  <div class="presets" id="presets"></div>
+
+  <!-- Filter -->
+  <div class="filter-bar" id="filterBar">
+    <span>🔵 Showing sessions for</span>
+    <span class="client-name" id="filterClientName"></span>
+    <button class="clear-filter" onclick="clearClientFilter()">Clear filter ✕</button>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card"><div class="value" id="totalClients">0</div><div class="label">Clients</div></div>
+    <div class="stat-card"><div class="value" id="totalHours">0:00</div><div class="label">Total Hours</div></div>
+    <div class="stat-card"><div class="value" id="totalEarnings">$0</div><div class="label">Earnings</div></div>
+  </div>
+
+  <!-- Timer -->
+  <div class="timer-section">
+    <div class="timer-row" id="timerInputRow">
+      <input class="client-input" id="clientInput" type="text" placeholder="Client name..." autocomplete="off" list="clientSuggestions">
+      <datalist id="clientSuggestions"></datalist>
+      <input class="rate-input" id="rateInput" type="number" min="0" step="1" placeholder="$/hr">
+    </div>
+    <div class="pomodoro-info" id="pomodoroInfo"></div>
+    <div class="pomodoro-progress" id="pomodoroProgress"><div class="fill" id="pomodoroFill"></div></div>
+    <div class="timer-display" id="timerDisplay">00:00:00</div>
+    <div class="timer-earnings" id="timerEarnings"></div>
+    <div class="timer-notes" id="timerNotes" style="display:none;margin-bottom:8px">
+      <input type="text" id="sessionNotes" placeholder="What are you working on?"
+             style="width:100%;padding:8px 12px;border:2px solid var(--border);border-radius:var(--radius-sm);
+                    font-size:.85rem;outline:none;background:var(--input-bg);color:var(--text);transition:border .2s"
+             onfocus="this.style.borderColor='var(--primary)'"
+             onblur="this.style.borderColor=''">
+    </div>
+    <div class="timer-controls" id="timerControls">
+      <button class="btn btn-success" id="startBtn" onclick="startTimer()">▶ Start</button>
+      <button class="btn btn-warning" id="pauseBtn" onclick="pauseTimer()" disabled>⏸ Pause</button>
+      <button class="btn btn-primary" id="doneBtn" onclick="doneTimer()" disabled style="display:none">✅ Done</button>
+      <button class="btn btn-outline" id="skipBtn" onclick="skipBreak()" disabled style="display:none">⏭ Skip</button>
+      <button class="btn btn-outline" id="extendBtn" onclick="extendBreak()" disabled style="display:none">+5m</button>
+      <button class="btn btn-danger" id="stopBtn" onclick="stopTimer()" disabled>✕ Cancel</button>
+    </div>
+    <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
+      <button class="btn btn-outline btn-sm" onclick="toggleModal('supportModal')" style="color:var(--muted);font-size:.75rem">☕ Support this project</button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" data-tab="today" onclick="switchTab('today')">📋 Today</button>
+    <button class="tab" data-tab="all" onclick="switchTab('all')">📜 All Sessions</button>
+  </div>
+
+  <div class="session-list" id="sessionList"></div>
+</div>
+
+<!-- Tutorial -->
+<div class="modal-overlay" id="tutorialModal">
+  <div class="modal">
+    <h2>📖 How to Use Client Clock</h2>
+    <div class="tutorial-step"><div class="tutorial-num">1</div><div><h4>Choose Your Mode</h4><p><strong>⏱ Free Timer</strong> — track as long as you want. <strong>🍅 Pomodoro</strong> — a time management technique where you work in focused 25-min sessions, take 5-min breaks, and after 4 sessions take a longer 15-min break. Great for staying productive without burning out. Toggle at the top.</p></div></div>
+    <div class="tutorial-step"><div class="tutorial-num">2</div><div><h4>Quick-Start or Manual</h4><p>Click a <strong>preset button</strong> above the timer, or type a client name + rate. Press <kbd>Enter</kbd> to start.</p></div></div>
+    <div class="tutorial-step"><div class="tutorial-num">3</div><div><h4>Track Your Time</h4><p><strong>⏸ Pause</strong> for breaks, <strong>✅ Done</strong> to finish and save, <strong>✕ Cancel</strong> to discard. In Pomodoro with auto-stop on, the timer ends automatically — just press Done to save and start your break.</p></div></div>
+    <div class="tutorial-step"><div class="tutorial-num">4</div><div><h4>Review & Filter</h4><p>Click a client name to see their history. <strong>📊</strong> for weekly/monthly summaries. <strong>📥</strong> to backup.</p></div></div>
+    <div class="modal-actions"><button class="btn btn-primary btn-sm" onclick="closeTutorial()">Got it!</button></div>
+  </div>
+</div>
+
+<!-- Summary Modal -->
+<div class="modal-overlay" id="summaryModal">
+  <div class="modal">
+    <h2>📊 Earnings Summary</h2>
+    <div class="summary-grid">
+      <div class="summary-card"><h3>This Week</h3><div class="big" id="weekEarnings">$0</div><div class="sub" id="weekHours">0 hrs</div></div>
+      <div class="summary-card"><h3>This Month</h3><div class="big" id="monthEarnings">$0</div><div class="sub" id="monthHours">0 hrs</div></div>
+    </div>
+    <h3 style="font-size:.85rem;color:var(--muted);margin-bottom:6px">By Client (This Month)</h3>
+    <table class="summary-table"><thead><tr><th>Client</th><th>Hours</th><th>Earnings</th></tr></thead><tbody id="clientSummaryBody"></tbody></table>
+    <div class="modal-actions"><button class="btn btn-outline btn-sm" onclick="toggleModal('summaryModal')">Close</button></div>
+  </div>
+</div>
+
+<!-- Support Modal -->
+<div class="modal-overlay" id="supportModal">
+  <div class="modal" style="text-align:center">
+    <h2>☕ Support This Project</h2>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:16px">
+      Client Clock is and will always be free.<br>
+      If it helps you earn, consider buying me a coffee ❤️
+    </p>
+    <div style="background:var(--input-bg);border-radius:var(--radius);padding:20px;margin-bottom:16px;display:inline-block">
+      <img src="gcash-qr.jpg?v=2" alt="GCash QR" style="width:220px;height:220px;display:block;margin:0 auto;border-radius:8px">
+    </div>
+    <p style="font-size:.8rem;color:var(--muted)">Scan with GCash to send a donation</p>
+    <div class="modal-actions" style="justify-content:center;margin-top:12px">
+      <button class="btn btn-primary btn-sm" onclick="toggleModal('supportModal')">Close</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <h2>⚙️ Settings</h2>
+    <label>Default Hourly Rate</label>
+    <input type="number" id="defaultRate" min="0" step="1">
+    <label>Currency</label>
+    <select id="currencySelect"><option value="$">$ (USD)</option><option value="₱">₱ (PHP)</option></select>
+
+    <h3 style="font-size:.9rem;margin:16px 0 8px;color:var(--text)">🍅 Pomodoro Timer</h3>
+    <label>Work Duration (minutes)</label>
+    <input type="number" id="pomodoroWork" min="1" max="120" step="1">
+    <label>Short Break (minutes)</label>
+    <input type="number" id="pomodoroBreak" min="1" max="30" step="1">
+    <label>Long Break (minutes)</label>
+    <input type="number" id="pomodoroLongBreak" min="1" max="60" step="1">
+    <label>Sessions Before Long Break</label>
+    <input type="number" id="pomodoroCycles" min="1" max="10" step="1">
+    <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer">
+      <input type="checkbox" id="pomodoroAutoStop" style="width:auto;margin-bottom:0">
+      Auto-stop when work session ends
+      <span style="font-weight:400;color:var(--muted);font-size:.75rem">(Off = timer keeps running, you click Stop)</span>
+    </label>
+
+    <h3 style="font-size:.9rem;margin:16px 0 8px;color:var(--text)">🏃 Quick-Start Presets</h3>
+    <div id="presetList"></div>
+    <button class="btn btn-outline btn-sm" onclick="addPresetField()" style="width:100%;margin-bottom:10px">+ Add Preset</button>
+
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-sm" onclick="toggleModal('settingsModal')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Session Modal -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <h2>✏️ Edit Session</h2>
+    <label>Client</label><input type="text" id="editClient">
+    <label>Date</label><input type="date" id="editDate">
+    <label>Duration (minutes)</label><input type="number" id="editDuration" min="1" step="1">
+    <label>Hourly Rate</label><input type="number" id="editRate" min="0" step="1">
+    <label>Status</label>
+    <select id="editStatus">
+      <option value="completed">✅ Completed</option>
+      <option value="cancelled">✕ Cancelled</option>
+    </select>
+    <label>Notes</label><textarea id="editNotes" placeholder="What did you work on?"></textarea>
+    <div class="modal-actions"><button class="btn btn-outline btn-sm" onclick="toggleModal('editModal')">Cancel</button><button class="btn btn-primary btn-sm" onclick="saveEditSession()">Save</button></div>
+  </div>
+</div>
+
+<!-- Feedback Modal -->
+<div class="modal-overlay" id="feedbackModal">
+  <div class="modal" style="text-align:center">
+    <h2>💬 Suggestions?</h2>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:16px">
+      Got an idea to make Client Clock better?<br>
+      Found a bug? Something confusing?<br>
+      Let me know through the form below 👇
+    </p>
+    <div style="background:var(--input-bg);border-radius:var(--radius);padding:4px;margin-bottom:12px;overflow:hidden">
+      <iframe src="https://docs.google.com/forms/d/e/1FAIpQLScAUocFMpi9O7uWq0yt6rvwEmFwE1Lo5v_5gdWlN3o2W8Q8BQ/viewform?embedded=true" width="100%" height="420" frameborder="0" marginheight="0" marginwidth="0" style="border-radius:6px">Loading…</iframe>
+    </div>
+    <div class="modal-actions" style="justify-content:center">
+      <button class="btn btn-primary btn-sm" onclick="toggleModal('feedbackModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Export Modal -->
+<div class="modal-overlay" id="exportModal">
+  <div class="modal">
+    <h2>📥 Export / Import</h2>
+    <p style="font-size:.8rem;color:var(--muted);margin-bottom:12px">⚠️ Data stored in browser. Always backup before clearing cache.</p>
+    <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="exportAllCSV()">Export All as CSV</button>
+    <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="exportJSON()">Export as JSON (Backup)</button>
+    <button class="btn btn-success" style="width:100%;margin-bottom:8px" onclick="importJSON()">Import Backup</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(event)">
+    <button class="btn btn-danger" style="width:100%" onclick="clearAllData()">🗑 Clear All Data</button>
+    <div class="modal-actions" style="margin-top:10px"><button class="btn btn-outline btn-sm" onclick="toggleModal('exportModal')">Close</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// DATA LAYER
+// ============================================================
+const SK='client_clock_data',TK='client_clock_timer',WK='client_clock_warn',TUK='client_clock_tutorial';
+
+function dd(){return{sessions:[],clientRates:{},presets:[],settings:{defaultRate:25,currency:'$',darkMode:false,mode:'free',pomodoroWork:25,pomodoroBreak:5,pomodoroLongBreak:15,pomodoroCycles:4,pomodoroAutoStop:true}}}
+function ld(){try{const r=localStorage.getItem(SK);if(!r)return dd();const d=JSON.parse(r);return{sessions:d.sessions||[],clientRates:d.clientRates||{},presets:d.presets||[],settings:{...dd().settings,...(d.settings||{})}}}catch{return dd()}}
+let data=ld();
+function sv(){localStorage.setItem(SK,JSON.stringify(data))}
+function svt(){if(ts){const t={...ts};t._ts=Date.now();localStorage.setItem(TK,JSON.stringify(t))}else localStorage.removeItem(TK)}
+function ldt(){try{const r=localStorage.getItem(TK);if(!r)return null;const t=JSON.parse(r);if(t.running){const e=(Date.now()-t._ts)/1000;t.elapsed+=Math.max(0,e);t.startTime=Date.now()}if(t.pomodoroEndAt){const left=t.pomodoroEndAt-Date.now();t.pomodoroLeft=Math.max(0,left)}return t}catch{return null}}
+
+// ============================================================
+// SOUND
+// ============================================================
+let ac=null;
+function beep(freq=800,dur=.15,vol=.3){
+  try{if(!ac)ac=new(window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);o.frequency.value=freq;g.gain.setValueAtTime(vol,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+dur);o.start(ac.currentTime);o.stop(ac.currentTime+dur)}catch(e){}
+}
+function alarm(){
+  beep(660,.12,.4);setTimeout(()=>beep(880,.15,.4),150);setTimeout(()=>beep(1100,.2,.4),350)
+}
+
+// ============================================================
+// WARNING
+// ============================================================
+function dismissWarning(){localStorage.setItem(WK,'1');document.getElementById('warningBanner').classList.add('hidden')}
+
+// ============================================================
+// UNFINISHED SESSION
+// ============================================================
+function showUnfinishedBanner(savedTs){
+  const el=document.getElementById('unfinishedBanner');
+  document.getElementById('unfinishedClient').textContent=savedTs.client||'Session';
+  document.getElementById('unfinishedDuration').textContent=fmtShort(savedTs.elapsed||0);
+  const since=savedTs._ts?new Date(savedTs._ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'';
+  document.getElementById('unfinishedSince').textContent='started at '+since;
+  el.classList.remove('hidden')
+}
+function resumeUnfinished(){
+  const el=document.getElementById('unfinishedBanner');el.classList.add('hidden');
+  document.getElementById('clientInput').value=ts?.client||'';
+  if(data.clientRates[ts?.client])document.getElementById('rateInput').value=data.clientRates[ts.client];
+  if(ts){ts.running=true;ts.startTime=Date.now();svt();updateDisplay();showToast('▶ Resumed')}
+}
+function cancelUnfinished(){
+  if(!ts)return;
+  const now=Date.now(),elapsedSec=ts.elapsed||0;
+  if(elapsedSec>=5){
+    const session={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),client:ts.client||'Session',
+      start:now-(elapsedSec*1000),end:now,duration:Math.round(elapsedSec),
+      rate:data.clientRates[ts.client]||data.settings.defaultRate,notes:'',
+      timestamp:new Date().toISOString(),status:'cancelled'};
+    data.sessions.push(session);sv();render()
+  }
+  document.getElementById('unfinishedBanner').classList.add('hidden');
+  ts=null;svt();showToast('Cancelled — saved as cancelled')
+}
+function dismissUnfinished(){
+  document.getElementById('unfinishedBanner').classList.add('hidden');
+  ts=null;svt();showToast('Dismissed')
+}
+
+// ============================================================
+// MODE
+// ============================================================
+let pomodoroCycleCount=0; // today's completed work cycles
+
+function setMode(m){
+  if(ts){showToast('Stop timer first to switch modes');return}
+  data.settings.mode=m;sv();
+  document.querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('active',b.dataset.mode===m));
+  document.getElementById('startBtn').className=m==='pomodoro'?'btn btn-pomodoro':'btn btn-success';
+  document.getElementById('startBtn').innerHTML=m==='pomodoro'?'🍅 Start':'▶ Start';
+  document.getElementById('pomodoroInfo').textContent=m==='pomodoro'?'🍅 Pomodoro mode — work in focused sessions':'';
+  document.getElementById('pomodoroProgress').classList.remove('visible');
+  updateButtons();
+}
+
+// ============================================================
+// PRESETS
+// ============================================================
+function renderPresets(){
+  const el=document.getElementById('presets');
+  let html=(data.presets||[]).map((p,i)=>`<button class="preset-btn" onclick="quickStart(${i})" title="${esc(p.name)} — ${data.settings.currency}${p.rate}/hr">${esc(p.name)} <span class="preset-rate">${data.settings.currency}${p.rate}/hr</span></button>`).join('');
+  html+=`<button class="preset-btn preset-add-btn" onclick="openPresetSettings()">+ Add Client</button>`;
+  el.innerHTML=html;
+}
+
+function quickStart(i){
+  const p=data.presets[i];if(!p)return;
+  stopTimer();document.getElementById('clientInput').value=p.name;document.getElementById('rateInput').value=p.rate;
+  startTimer();
+}
+
+function openPresetSettings(){toggleModal('settingsModal');setTimeout(()=>{const e=document.getElementById('presetList');if(e)e.scrollIntoView({behavior:'smooth',block:'center'})},200)}
+function renderPresetEditor(){
+  const el=document.getElementById('presetList');
+  el.innerHTML=(data.presets||[]).map((p,i)=>`<div style="display:flex;gap:6px;margin-bottom:6px;align-items:center"><input type="text" id="pe_n_${i}" value="${esc(p.name)}" placeholder="Client" style="flex:1;margin-bottom:0"><input type="number" id="pe_r_${i}" value="${p.rate}" min="0" step="1" style="width:80px;margin-bottom:0" placeholder="Rate"><button class="btn btn-danger btn-xs" onclick="removePresetField(${i})" style="padding:4px 8px">✕</button></div>`).join('');
+}
+function addPresetField(){data.presets.push({name:'',rate:data.settings.defaultRate});renderPresetEditor()}
+function removePresetField(i){data.presets.splice(i,1);renderPresetEditor()}
+
+// ============================================================
+// TIMER
+// ============================================================
+let ts=null;
+function fmt(s){const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),se=Math.floor(s%60);return`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(se).padStart(2,'0')}`}
+function fmtOverdue(s){const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),se=Math.floor(s%60);if(h>0)return`${h}h ${m}m ${se}s`;if(m>0)return`${m}m ${se}s`;return`${se}s`}
+function fmtShort(s){const h=Math.floor(s/3600),m=Math.floor((s%3600)/60);return h>0?`${h}h ${m}m`:`${m}m`}
+
+function getPomodoroDuration(){
+  // Count completed cycles today
+  const td=new Date();td.setHours(0,0,0,0);
+  const todaySessions=data.sessions.filter(s=>new Date(s.timestamp)>=td);
+  const workCycles=todaySessions.filter(s=>s.pomodoro).length;
+  const totalCycles=data.settings.pomodoroCycles||4;
+  const isLongBreak=workCycles>0&&workCycles%totalCycles===0;
+  return isLongBreak?(data.settings.pomodoroLongBreak||15)*60:(data.settings.pomodoroBreak||5)*60;
+}
+
+function updateDisplay(){
+  const m=data.settings.mode;
+  if(!ts){
+    document.getElementById('timerDisplay').textContent='00:00:00';
+    document.getElementById('timerDisplay').className='timer-display';
+    document.getElementById('timerEarnings').textContent='';
+    document.getElementById('pomodoroInfo').textContent=m==='pomodoro'?'🍅 Pomodoro mode — work in focused sessions':'';
+    document.getElementById('pomodoroProgress').classList.remove('visible');
+    return
+  }
+  const now=Date.now();
+  let elapsed,remaining,display,cls='timer-display';
+
+  if(m==='pomodoro'&&ts.pomodoroType){
+    remaining=Math.max(0,ts.pomodoroEndAt-now);
+    const total=ts.pomodoroTotalDur;
+    const pct=total>0?((total-remaining)/total)*100:0;
+    elapsed=(ts.pomodoroTotalDur||0)-remaining;
+
+    // Check if complete
+    if(remaining<=0&&ts.running){
+      if(ts.pomodoroType==='work'){
+        alarm();
+        if(data.settings.pomodoroAutoStop!==false){
+          // Auto-stop: log session, start break
+          ts.running=false;
+          const client=document.getElementById('clientInput').value.trim()||'Pomodoro Session';
+          const rate=parseFloat(document.getElementById('rateInput').value)||data.settings.defaultRate;
+          const durSec=Math.round(ts.pomodoroTotalDur/1000);
+          const autoNotes=document.getElementById('sessionNotes').value.trim()||'🍅 Pomodoro work session';
+          const session={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),client:client,start:ts.startTime,end:Date.now(),duration:durSec,rate:rate,notes:autoNotes,status:'completed',timestamp:new Date().toISOString(),pomodoro:true};
+          data.sessions.push(session);sv();
+          showToast(`🍅 Work complete! ${fmtShort(durSec)} logged for ${client}`);
+          const breakDur=data.settings.pomodoroBreak||5;
+          const longBreakDur=data.settings.pomodoroLongBreak||15;
+          const td=new Date();td.setHours(0,0,0,0);
+          const tsess=data.sessions.filter(s=>new Date(s.timestamp)>=td);
+          const cycles=tsess.filter(s=>s.pomodoro).length;
+          const totalCycles=data.settings.pomodoroCycles||4;
+          const isLong=cycles>0&&cycles%totalCycles===0;
+          const bm=isLong?longBreakDur:breakDur;
+          document.getElementById('timerNotes').style.display='none';document.getElementById('sessionNotes').value='';
+          ts={client:client,startTime:Date.now(),elapsed:0,running:true,mode:'pomodoro',pomodoroType:'break',pomodoroTotalDur:bm*60*1000,pomodoroEndAt:Date.now()+bm*60*1000};
+          svt();
+          setTimeout(()=>updateDisplay(),200);
+          return
+        } else {
+          // Manual mode: mark as overtime, keep running
+          ts.pomodoroOverdue=true;
+          ts.elapsed=(now-ts.startTime)/1000;
+          showToast('⏰ Time\'s up! Click Stop to end this session');
+        }
+      } else {
+        // Break ended
+        ts.running=false;
+        alarm();
+        showToast('☕ Break over! Ready for next work session?');
+        ts.pomodoroType='break_done';
+        svt();
+        updateDisplay();
+        updateButtons();
+        return
+      }
+    }
+
+    if(ts.pomodoroOverdue){
+      // Show overtime (counting up from when session ended)
+      const overtime=Math.ceil((now-ts.pomodoroEndAt)/1000);
+      display='+'+fmt(overtime);
+      cls+=' pomodoro-work';
+      // Keep progress bar at 100%
+      const bar=document.getElementById('pomodoroProgress');
+      bar.classList.add('visible');
+      const fill=document.getElementById('pomodoroFill');
+      fill.style.width='100%';fill.className='fill work';
+    } else {
+      display=fmt(Math.ceil(remaining/1000));
+      cls+=ts.pomodoroType==='work'?' pomodoro-work':' pomodoro-break';
+      // Progress bar
+      const bar=document.getElementById('pomodoroProgress');
+      bar.classList.add('visible');
+      const fill=document.getElementById('pomodoroFill');
+      fill.style.width=Math.min(100,pct)+'%';
+      fill.className='fill '+(ts.pomodoroType==='work'?'work':'break');
+    }
+  } else {
+    // Free mode or pomodoro without type set
+    elapsed=ts.running?(now-ts.startTime)/1000+ts.elapsed:ts.elapsed;
+    display=fmt(elapsed);
+    cls+=ts.running?' running':' paused';
+  }
+
+  document.getElementById('timerDisplay').textContent=display;
+  document.getElementById('timerDisplay').className=cls;
+
+  // Running earnings
+  if(m!=='pomodoro'){
+    const hrs=elapsed/3600;
+    const rate=data.clientRates[ts.client]||data.settings.defaultRate;
+    const earned=hrs*rate;
+    const el=document.getElementById('timerEarnings');
+    if(ts.running){el.textContent=`💰 ${data.settings.currency}${earned.toFixed(2)} earned so far`;el.className='timer-earnings running'}
+    else if(!ts.running&&ts.elapsed>0){el.textContent=`💰 ${data.settings.currency}${earned.toFixed(2)} earned`;el.className='timer-earnings'}
+    else el.textContent='';
+  }
+
+  // Pomodoro info text
+  if(m==='pomodoro'&&ts.pomodoroType){
+    const td=new Date();td.setHours(0,0,0,0);
+    const todayWork=data.sessions.filter(s=>{const d=new Date(s.timestamp);return d>=td&&s.pomodoro}).length;
+    const totalCycles=data.settings.pomodoroCycles||4;
+    const rem=Math.max(0,Math.ceil((ts.pomodoroEndAt-Date.now())/1000));
+    const typeText=ts.pomodoroType==='work'?'Focus':'Break';
+    const overtimeText=ts.pomodoroOverdue?` · +${fmtOverdue((now-ts.pomodoroEndAt)/1000)} overtime`:``;
+    const cycleText=ts.pomodoroType==='work'?`Session ${todayWork+1}/${totalCycles}`:`Rest (${Math.ceil(rem/60)}m)`;
+    document.getElementById('pomodoroInfo').innerHTML=`🍅 <span class="pomodoro-type ${ts.pomodoroType}">${typeText}</span> · <span class="pomodoro-cycle">${cycleText}${overtimeText}</span>`;
+  }
+  updateButtons();
+}
+
+function updateButtons(){
+  const m=data.settings.mode;
+  const hasClient=!!document.getElementById('clientInput').value.trim();
+  const timerActive=!!(ts&&(ts.running||(!ts.running&&ts.elapsed>0)));
+  const isBreak=ts?.pomodoroType==='break';
+  document.getElementById('startBtn').disabled=m==='pomodoro'?(ts&&ts.running):(!hasClient||(ts&&ts.running));
+  document.getElementById('pauseBtn').disabled=!ts?.running;
+  document.getElementById('doneBtn').style.display=(timerActive&&!isBreak)?'inline-block':'none';
+  document.getElementById('doneBtn').disabled=!timerActive||isBreak;
+  document.getElementById('skipBtn').style.display=isBreak?'inline-block':'none';
+  document.getElementById('skipBtn').disabled=!isBreak;
+  document.getElementById('extendBtn').style.display=isBreak?'inline-block':'none';
+  document.getElementById('extendBtn').disabled=!isBreak;
+  document.getElementById('stopBtn').disabled=!ts;
+}
+
+function startTimer(){
+  const m=data.settings.mode;
+  const client=document.getElementById('clientInput').value.trim();
+  const rate=parseFloat(document.getElementById('rateInput').value)||data.settings.defaultRate;
+
+  if(m==='pomodoro'){
+    // Resume paused pomodoro
+    if(ts&&!ts.running&&ts.pomodoroType&&ts.pomodoroType!=='break_done'){
+      ts.running=true;ts.startTime=Date.now();
+      if(ts.pomodoroEndAt)ts.pomodoroEndAt=Date.now()+Math.max(0,ts.pomodoroEndAt-(ts.startTime-ts.elapsed*1000));
+      svt();updateDisplay();return
+    }
+    // Start new pomodoro
+    const workMin=data.settings.pomodoroWork||25;
+    const workMs=workMin*60*1000;
+    if(client){data.clientRates[client]=rate;sv()}
+    if(ts)stopTimer();
+    ts={client:client||'Pomodoro Session',startTime:Date.now(),elapsed:0,running:true,mode:'pomodoro',pomodoroType:'work',pomodoroTotalDur:workMs,pomodoroEndAt:Date.now()+workMs};
+    document.getElementById('timerNotes').style.display='block';document.getElementById('sessionNotes').value='';document.getElementById('sessionNotes').focus();
+    svt();updateDisplay();return
+  }
+
+  // Free mode
+  if(!client){showToast('Enter a client name');return}
+  data.clientRates[client]=rate;sv();
+  if(ts&&!ts.running&&ts.client===client){ts.running=true;ts.startTime=Date.now()}
+  else{if(ts)saveSession();ts={client,startTime:Date.now(),elapsed:0,running:true};document.getElementById('timerNotes').style.display='block';document.getElementById('sessionNotes').value='';document.getElementById('sessionNotes').focus()}
+  svt();updateDisplay()
+}
+
+function pauseTimer(){
+  if(!ts?.running)return;
+  if(data.settings.mode==='pomodoro'&&ts.pomodoroEndAt){
+    const elapsed=ts.pomodoroTotalDur-Math.max(0,ts.pomodoroEndAt-Date.now());
+    ts.elapsed=elapsed;
+  } else {
+    ts.elapsed=(Date.now()-ts.startTime)/1000;
+  }
+  ts.running=false;svt();updateDisplay()
+}
+
+function doneTimer(){
+  if(!ts)return;
+  const now=Date.now(),elapsedSec=ts.running?(now-ts.startTime)/1000:ts.elapsed;
+  if(elapsedSec<5){showToast('Too short (<5s)');return}
+
+  // If it's a break, end the break
+  if(ts.pomodoroType==='break'){
+    ts.running=false;alarm();
+    showToast('☕ Break ended! Ready for next work session?');
+    document.getElementById('pomodoroInfo').textContent='☕ Break done — start next work session when ready';
+    document.getElementById('pomodoroProgress').classList.remove('visible');
+    document.getElementById('timerDisplay').className='timer-display paused';
+    document.getElementById('timerNotes').style.display='none';document.getElementById('sessionNotes').value='';
+    updateButtons();
+    svt();
+    return
+  }
+
+  const isPomodoro=data.settings.mode==='pomodoro'&&ts.pomodoroType;
+  const client=document.getElementById('clientInput').value.trim()||(isPomodoro?'Pomodoro Session':'');
+
+  let notes='';
+  if(isPomodoro){
+    const overtime=ts.pomodoroOverdue?Math.round((now-ts.pomodoroEndAt)/1000):0;
+    const baseDur=Math.round((ts.pomodoroTotalDur||0)/1000);
+    const totalDur=baseDur+overtime;
+    const pNotes=document.getElementById('sessionNotes').value.trim();
+    notes=pNotes?pNotes:(overtime>0?'🍅 Pomodoro (+'+fmt(overtime)+' overtime)':'🍅 Pomodoro work session');
+    // Log the work session
+    const session={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),client:client,start:ts.startTime,end:now,duration:Math.round(elapsedSec),rate:data.clientRates[client]||data.settings.defaultRate,notes:notes,status:'completed',timestamp:new Date().toISOString(),pomodoro:true};
+    data.sessions.push(session);sv();
+    showToast(`🍅 Done! ${fmtShort(elapsedSec)} ${overtime>0?'(incl. +'+fmt(overtime)+' overtime)':''}for ${client}`);
+    // Auto-start break
+    const breakDur=data.settings.pomodoroBreak||5;
+    const longBreakDur=data.settings.pomodoroLongBreak||15;
+    const td=new Date();td.setHours(0,0,0,0);
+    const tsess=data.sessions.filter(s=>new Date(s.timestamp)>=td);
+    const cycles=tsess.filter(s=>s.pomodoro).length;
+    const totalCycles=data.settings.pomodoroCycles||4;
+    const isLong=cycles>0&&cycles%totalCycles===0;
+    const bm=isLong?longBreakDur:breakDur;
+    document.getElementById('timerNotes').style.display='none';document.getElementById('sessionNotes').value='';
+    ts={client:client,startTime:Date.now(),elapsed:0,running:true,mode:'pomodoro',pomodoroType:'break',pomodoroTotalDur:bm*60*1000,pomodoroEndAt:Date.now()+bm*60*1000};
+    svt();updateDisplay();updateButtons();
+    return
+  }
+
+  // Free mode
+  const notesVal=document.getElementById('sessionNotes').value.trim();
+  const session={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),client:client,start:ts.running?ts.startTime:(ts.startTime-ts.elapsed*1000),end:now,duration:Math.round(elapsedSec),rate:data.clientRates[client]||data.settings.defaultRate,notes:notesVal,status:'completed',timestamp:new Date().toISOString()};
+  data.sessions.push(session);sv();render();beep();
+  showToast(`✓ ${fmt(elapsedSec)} logged for ${client} — ${data.settings.currency}${((elapsedSec/3600)*session.rate).toFixed(2)}`);
+
+  document.getElementById('timerNotes').style.display='none';document.getElementById('sessionNotes').value='';
+  ts=null;document.getElementById('timerDisplay').textContent='00:00:00';document.getElementById('timerDisplay').className='timer-display';
+  document.getElementById('timerEarnings').textContent='';
+  document.getElementById('pomodoroInfo').textContent='';
+  document.getElementById('pomodoroProgress').classList.remove('visible');
+  updateButtons();document.getElementById('clientInput').value='';document.getElementById('rateInput').value='';
+  svt()
+}
+
+function skipBreak(){
+  if(!ts||ts.pomodoroType!=='break')return;
+  alarm();
+  showToast('☕ Break skipped! Ready for next work session?');
+  document.getElementById('pomodoroInfo').textContent='☕ Break skipped — start next work session when ready';
+  document.getElementById('pomodoroProgress').classList.remove('visible');
+  clearTimer();
+  updateButtons()
+}
+
+function extendBreak(){
+  if(!ts||ts.pomodoroType!=='break')return;
+  const extra=5*60*1000;
+  ts.pomodoroTotalDur=((ts.pomodoroTotalDur||0)+extra);
+  ts.pomodoroEndAt=(ts.pomodoroEndAt||Date.now())+extra;
+  if(!ts.running){ts.startTime=Date.now();ts.running=true}
+  showToast('+5m added to break');
+  svt();updateDisplay();
+}
+
+function stopTimer(){
+  if(!ts)return;
+  // Save as cancelled instead of discarding
+  const now=Date.now(),elapsedSec=ts.running?(now-ts.startTime)/1000:ts.elapsed;
+  if(elapsedSec>=5){
+    const isPomodoro=data.settings.mode==='pomodoro'&&ts.pomodoroType;
+    const client=document.getElementById('clientInput').value.trim()||(isPomodoro?'Pomodoro Session':'Session');
+    const cancelNotes=document.getElementById('sessionNotes').value.trim();
+    const session={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),client:client,start:ts.running?ts.startTime:(ts.startTime-ts.elapsed*1000),end:now,duration:Math.round(elapsedSec),rate:data.clientRates[client]||data.settings.defaultRate,notes:cancelNotes,timestamp:new Date().toISOString(),status:'cancelled',pomodoro:isPomodoro||undefined};
+    data.sessions.push(session);sv();render();
+  }
+  clearTimer();showToast('Cancelled — session saved as cancelled')
+}
+
+function clearTimer(){
+  ts=null;document.getElementById('timerDisplay').textContent='00:00:00';document.getElementById('timerDisplay').className='timer-display';
+  document.getElementById('timerEarnings').textContent='';
+  document.getElementById('pomodoroInfo').textContent=data.settings.mode==='pomodoro'?'🍅 Pomodoro mode — work in focused sessions':'';
+  document.getElementById('pomodoroProgress').classList.remove('visible');
+  document.getElementById('timerNotes').style.display='none';document.getElementById('sessionNotes').value='';
+  updateButtons();document.getElementById('clientInput').value='';document.getElementById('rateInput').value='';
+  svt()
+}
+
+// ============================================================
+// CLIENT FILTER
+// ============================================================
+let cf=null;
+function filterByClient(n){cf=n;document.getElementById('filterBar').classList.add('visible');document.getElementById('filterClientName').textContent=n;render()}
+function clearClientFilter(){cf=null;document.getElementById('filterBar').classList.remove('visible');render()}
+
+// ============================================================
+// TUTORIAL
+// ============================================================
+function showTutorial(){toggleModal('tutorialModal')}
+function closeTutorial(){localStorage.setItem(TUK,'1');toggleModal('tutorialModal')}
+
+// ============================================================
+// RENDER
+// ============================================================
+function render(){renderStats();renderSessions();renderPresets();updateButtons()}
+function renderStats(){
+  const completed=data.sessions.filter(s=>s.status!=='cancelled');
+  const cs=new Set(completed.map(s=>s.client));const ts=completed.reduce((s,x)=>s+x.duration,0);
+  const te=completed.reduce((s,x)=>s+(x.duration/3600)*x.rate,0);
+  document.getElementById('totalClients').textContent=cs.size;document.getElementById('totalHours').textContent=fmt(ts);
+  document.getElementById('totalEarnings').textContent=data.settings.currency+te.toFixed(0);
+}
+
+function renderSessions(){
+  const c=document.getElementById('sessionList'),t=document.querySelector('.tab.active')?.dataset.tab||'today';
+  const td=new Date();td.setHours(0,0,0,0);const tm=new Date(td.getTime()+86400000);
+  let l=[...data.sessions].sort((a,b)=>b.timestamp.localeCompare(a.timestamp));
+  if(cf)l=l.filter(s=>s.client===cf);
+  if(t==='today')l=l.filter(s=>{const d=new Date(s.timestamp);return d>=td&&d<tm});
+  if(!l.length){const m=cf?`No sessions for "${cf}".`:t==='today'?'No sessions today.':'No sessions yet.';c.innerHTML=`<div class="empty-state"><div class="icon">🕐</div><p>${m}</p></div>`;return}
+  c.innerHTML=l.map(s=>{
+    const hrs=s.duration/3600,earn=hrs*s.rate,st=new Date(s.start).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    const sd=new Date(s.timestamp).toLocaleDateString([],{month:'short',day:'numeric'});
+    const tag=s.pomodoro?'🍅 ':'🔵 ';
+    const statusBadge=s.status==='cancelled'?' <span style="color:var(--danger);font-size:.7rem">✕ Cancelled</span>':'';
+    return `<div class="session-card" style="${s.status==='cancelled'?'opacity:.55':''}"><div class="session-info" onclick="filterByClient('${esc(s.client)}')"><div class="client"><span class="client-link">${tag}${esc(s.client)}</span> <span class="rate-badge">${data.settings.currency}${s.rate}/hr</span></div><div class="meta">${sd} ${st} · ${fmtShort(s.duration)} · ${data.settings.currency}${earn.toFixed(2)}${s.pomodoro?' · 🍅':''}${statusBadge}</div>${s.notes?`<div class="note-preview">📝 ${esc(s.notes)}</div>`:''}</div><div class="session-actions"><button class="btn btn-outline btn-xs" onclick="event.stopPropagation();editSession('${s.id}')\">✏️</button><button class="btn btn-outline btn-xs" onclick="event.stopPropagation();deleteSession('${s.id}')\">🗑</button></div></div>`
+  }).join('');
+}
+
+function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML}
+function switchTab(n){document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===n));renderSessions()}
+
+// ============================================================
+// SESSION ACTIONS
+// ============================================================
+function deleteSession(id){if(!confirm('Delete?'))return;data.sessions=data.sessions.filter(s=>s.id!==id);sv();render();showToast('Deleted')}
+let eid=null;
+function editSession(id){const s=data.sessions.find(x=>x.id===id);if(!s)return;eid=id;document.getElementById('editClient').value=s.client;const d=new Date(s.timestamp);document.getElementById('editDate').value=d.toISOString().slice(0,10);document.getElementById('editDuration').value=Math.round(s.duration/60);document.getElementById('editRate').value=s.rate;document.getElementById('editStatus').value=s.status||'completed';document.getElementById('editNotes').value=s.notes||'';toggleModal('editModal')}
+function saveEditSession(){if(!eid)return;const s=data.sessions.find(x=>x.id===eid);if(!s)return;s.client=document.getElementById('editClient').value.trim();s.duration=parseInt(document.getElementById('editDuration').value)*60;s.rate=parseFloat(document.getElementById('editRate').value)||data.settings.defaultRate;s.status=document.getElementById('editStatus').value;s.notes=document.getElementById('editNotes').value.trim();const nd=document.getElementById('editDate').value;if(nd){const o=new Date(s.timestamp);const d=new Date(nd+'T'+o.toTimeString().slice(0,5));s.timestamp=d.toISOString();s.start=d.getTime()-s.duration*1000;s.end=d.getTime()}sv();render();toggleModal('editModal');showToast('Updated')}
+
+// ============================================================
+// SETTINGS / MODALS
+// ============================================================
+function toggleModal(id){
+  const el=document.getElementById(id);el.classList.toggle('active');
+  if(id==='settingsModal'&&el.classList.contains('active')){
+    document.getElementById('defaultRate').value=data.settings.defaultRate;
+    document.getElementById('currencySelect').value=data.settings.currency;
+    document.getElementById('pomodoroWork').value=data.settings.pomodoroWork||25;
+    document.getElementById('pomodoroBreak').value=data.settings.pomodoroBreak||5;
+    document.getElementById('pomodoroLongBreak').value=data.settings.pomodoroLongBreak||15;
+    document.getElementById('pomodoroCycles').value=data.settings.pomodoroCycles||4;
+    document.getElementById('pomodoroAutoStop').checked=data.settings.pomodoroAutoStop!==false;
+    renderPresetEditor()
+  }
+  if(id==='summaryModal'&&el.classList.contains('active'))renderSummary()
+}
+function saveSettings(){
+  const rate=parseFloat(document.getElementById('defaultRate').value),cur=document.getElementById('currencySelect').value;
+  if(isNaN(rate)||rate<0){showToast('Enter valid rate');return}
+  data.settings.defaultRate=rate;data.settings.currency=cur;
+  data.settings.pomodoroWork=parseInt(document.getElementById('pomodoroWork').value)||25;
+  data.settings.pomodoroBreak=parseInt(document.getElementById('pomodoroBreak').value)||5;
+  data.settings.pomodoroLongBreak=parseInt(document.getElementById('pomodoroLongBreak').value)||15;
+  data.settings.pomodoroCycles=parseInt(document.getElementById('pomodoroCycles').value)||4;
+  data.settings.pomodoroAutoStop=document.getElementById('pomodoroAutoStop').checked;
+  const ps=data.presets||[];
+  for(let i=0;i<ps.length;i++){const n=document.getElementById(`pe_n_${i}`)?.value?.trim();const r=parseFloat(document.getElementById(`pe_r_${i}`)?.value);if(n&&!isNaN(r)&&r>=0){ps[i].name=n;ps[i].rate=r}}
+  data.presets=ps.filter(p=>p.name);sv();render();toggleModal('settingsModal');showToast('Settings saved')
+}
+
+// ============================================================
+// DARK MODE
+// ============================================================
+function toggleDark(){data.settings.darkMode=!data.settings.darkMode;applyDark();sv()}
+function applyDark(){document.body.classList.toggle('dark',data.settings.darkMode);document.getElementById('darkToggle').textContent=data.settings.darkMode?'☀️':'🌙'}
+
+// ============================================================
+// SUMMARY
+// ============================================================
+function renderSummary(){
+  const n=new Date(),dow=n.getDay(),mon=new Date(n);mon.setDate(n.getDate()-(dow===0?6:dow-1));mon.setHours(0,0,0,0);
+  const sun=new Date(mon);sun.setDate(mon.getDate()+7);const ms=new Date(n.getFullYear(),n.getMonth(),1),me=new Date(n.getFullYear(),n.getMonth()+1,1);
+  const ws=data.sessions.filter(s=>{const d=new Date(s.timestamp);return d>=mon&&d<sun&&s.status!=='cancelled'});
+  const msess=data.sessions.filter(s=>{const d=new Date(s.timestamp);return d>=ms&&d<me&&s.status!=='cancelled'});
+  const wsec=ws.reduce((t,s)=>t+s.duration,0),wern=ws.reduce((t,s)=>t+(s.duration/3600)*s.rate,0);
+  const msec=msess.reduce((t,s)=>t+s.duration,0),mern=msess.reduce((t,s)=>t+(s.duration/3600)*s.rate,0);
+  document.getElementById('weekEarnings').textContent=data.settings.currency+wern.toFixed(0);
+  document.getElementById('weekHours').textContent=fmtShort(wsec);
+  document.getElementById('monthEarnings').textContent=data.settings.currency+mern.toFixed(0);
+  document.getElementById('monthHours').textContent=fmtShort(msec);
+  const bc={};msess.forEach(s=>{if(!bc[s.client])bc[s.client]={sec:0,earn:0};bc[s.client].sec+=s.duration;bc[s.client].earn+=(s.duration/3600)*s.rate});
+  document.getElementById('clientSummaryBody').innerHTML=
+    Object.entries(bc).sort((a,b)=>b[1].earn-a[1].earn).map(([name,v])=>`<tr><td><a href="#" class="client-click" onclick="event.preventDefault();toggleModal('summaryModal');filterByClient('${esc(name)}')">🔵 ${esc(name)}</a></td><td>${fmtShort(v.sec)}</td><td>${data.settings.currency}${v.earn.toFixed(2)}</td></tr>`).join('');
+}
+
+// ============================================================
+// EXPORT
+// ============================================================
+function exportAllCSV(){if(!data.sessions.length){showToast('No data');return}let c='Date,Client,Duration (min),Duration (hrs),Rate,Earnings,Notes,Pomodoro,Status\n';data.sessions.sort((a,b)=>a.timestamp.localeCompare(b.timestamp)).forEach(s=>{const d=new Date(s.timestamp).toLocaleDateString();c+=`"${d}","${s.client}",${Math.round(s.duration/60)},${(s.duration/3600).toFixed(2)},${s.rate},${((s.duration/3600)*s.rate).toFixed(2)},"${(s.notes||'').replace(/"/g,'""')}","${s.pomodoro?'Yes':''}","${s.status||'completed'}"\n`});dl(c,'client-clock-export.csv','text/csv');showToast('CSV downloaded')}
+function exportJSON(){dl(JSON.stringify(data,null,2),'client-clock-backup.json','application/json');showToast('Backup downloaded')}
+function importJSON(){document.getElementById('importFile').click()}
+function handleImport(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const imp=JSON.parse(ev.target.result);if(!imp.sessions){showToast('Invalid backup');return}if(confirm(`Merge ${imp.sessions.length} sessions? (Cancel to replace)`)){data.sessions=[...data.sessions,...imp.sessions];data.clientRates={...data.clientRates,...(imp.clientRates||{})};data.presets=[...data.presets,...(imp.presets||[])];if(imp.settings)data.settings={...data.settings,...imp.settings}}else data=imp;sv();render();showToast(`Imported ${imp.sessions.length} sessions`)}catch{showToast('Error reading file')}};r.readAsText(f);e.target.value=''}
+function clearAllData(){if(!confirm('Delete ALL data? Cannot be undone.'))return;if(!confirm('Sure?'))return;data=dd();data.settings.darkMode=document.body.classList.contains('dark');sv();render();toggleModal('exportModal');showToast('Cleared')}
+function dl(c,n,m){const b=new Blob([c],{type:m}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=n;document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(u),1000)}
+
+// ============================================================
+// TOAST
+// ============================================================
+let tt;function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),3000)}
+
+// ============================================================
+// KEYBOARD
+// ============================================================
+document.getElementById('clientInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();if(ts?.running)stopTimer();else startTimer()}});
+document.getElementById('clientInput').addEventListener('input',()=>{const n=document.getElementById('clientInput').value.trim();if(data.clientRates[n])document.getElementById('rateInput').value=data.clientRates[n];updateButtons()});
+
+// ============================================================
+// PERIODIC
+// ============================================================
+setInterval(()=>{if(ts?.running){updateDisplay();svt()}},500);
+
+// ============================================================
+// INIT
+// ============================================================
+applyDark();if(localStorage.getItem(WK))document.getElementById('warningBanner').classList.add('hidden');
+if(!localStorage.getItem(TUK))showTutorial();
+
+// Set initial mode
+setMode(data.settings.mode||'free');
+
+// Restore timer
+const s=ldt();
+if(s){
+  ts=s;
+  // Check if there's meaningful elapsed time to restore
+  const hasElapsed=ts.elapsed>5||(ts.pomodoroType&&ts.pomodoroEndAt);
+  if(hasElapsed&&!ts.running){
+    showUnfinishedBanner(ts)
+  } else {
+    if(ts.running){ts.startTime=Date.now()}
+    document.getElementById('clientInput').value=ts.client||'';
+    document.getElementById('rateInput').value=data.clientRates[ts.client]||data.settings.defaultRate;
+    updateDisplay()
+  }
+}
+render();
+</script>
+</body>
+</html>
