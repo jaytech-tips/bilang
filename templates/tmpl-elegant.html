@@ -1,0 +1,46 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invoice - Elegant</title>
+<style>
+  @page{margin:20mm 15mm}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:Georgia,'Times New Roman',serif;color:#2a2a2a;font-size:11pt;line-height:1.6;padding:40px;max-width:800px;margin:0 auto;background:#fefcf8}
+  .header{display:flex;justify-content:space-between;align-items:start;margin-bottom:36px;padding-bottom:24px;border-bottom:2px solid #d4a373}
+  .header .brand h1{font-size:24pt;font-weight:400;color:#8b5a2b;letter-spacing:1px}
+  .header .brand p{font-size:9pt;color:#b08968;font-style:italic}
+  .header .inv-info{text-align:right}
+  .header .inv-info h2{font-size:15pt;font-weight:400;color:#8b5a2b;letter-spacing:3px;text-transform:uppercase;margin-bottom:4px}
+  .header .inv-info p{font-size:9pt;color:#b08968}
+  .billing{background:#f6f0e8;padding:16px 20px;border-radius:6px;margin-bottom:28px;display:flex;justify-content:space-between}
+  .billing div{font-size:10pt}
+  .billing .label{color:#b08968;font-size:7.5pt;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:2px}
+  .billing .val{font-weight:600;color:#5c3d1e}
+  table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:10pt}
+  th{text-align:left;color:#b08968;font-size:7.5pt;font-weight:400;text-transform:uppercase;letter-spacing:2px;padding:8px 4px;border-bottom:1px solid #e8d5c4}
+  td{padding:10px 4px;border-bottom:1px solid #f0e6da;color:#4a3a2a}
+  td:last-child,th:last-child{text-align:right}
+  .totals{margin-left:auto;width:280px;margin-top:16px;padding:16px 20px;background:#f6f0e8;border-radius:6px}
+  .totals .row{display:flex;justify-content:space-between;padding:5px 0;font-size:10pt;color:#5c3d1e}
+  .totals .row.total{border-top:1px solid #d4a373;padding-top:8px;margin-top:4px;font-size:13pt;font-weight:700}
+  .footer{margin-top:40px;padding-top:20px;border-top:1px solid #e8d5c4;font-size:8.5pt;color:#b08968;text-align:center;font-style:italic}
+</style></head><body>
+<div class="header">
+  <div class="brand"><h1>Jayvee Gonzales</h1><p>Video Editor & Freelancer</p></div>
+  <div class="inv-info"><h2>Invoice</h2><p>INV-ABC123</p><p>May 23, 2026</p></div>
+</div>
+<div class="billing">
+  <div><div class="label">Bill To</div><div class="val">Client Name</div></div>
+  <div><div class="label">Period</div><div class="val">May 1 — May 23, 2026</div></div>
+  <div><div class="label">Payment</div><div class="val">Due in 15 days</div></div>
+</div>
+<table><thead><tr><th>Date</th><th>Description</th><th style="text-align:center">Hours</th><th style="text-align:right">Rate</th><th style="text-align:right">Amount</th></tr></thead>
+<tbody>
+<tr><td>May 2</td><td>Wedding highlight draft</td><td style="text-align:center">3.50</td><td style="text-align:right">$25.00</td><td style="text-align:right">$87.50</td></tr>
+<tr><td>May 5</td><td>Color grading</td><td style="text-align:center">2.00</td><td style="text-align:right">$25.00</td><td style="text-align:right">$50.00</td></tr>
+<tr><td>May 8</td><td>Client revisions</td><td style="text-align:center">1.50</td><td style="text-align:right">$25.00</td><td style="text-align:right">$37.50</td></tr>
+<tr><td>May 12</td><td>Final export</td><td style="text-align:center">1.00</td><td style="text-align:right">$25.00</td><td style="text-align:right">$25.00</td></tr>
+</tbody></table>
+<div class="totals">
+  <div class="row"><span>Total Hours</span><span>8.00</span></div>
+  <div class="row total"><span>Total Due</span><span>$200.00</span></div>
+</div>
+<div class="footer"><p>Thank you for your business.</p></div>
+</body></html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invoice - Modern Terracotta</title>
+<style>
+  @page{margin:0}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',Arial,sans-serif;color:#333;font-size:10.5pt;line-height:1.5;display:flex;min-height:100vh}
+  .sidebar{width:220px;background:#7a3b2e;color:#fff;padding:36px 24px;display:flex;flex-direction:column;justify-content:space-between;flex-shrink:0}
+  .sidebar h1{font-size:18pt;font-weight:300;letter-spacing:1px;margin-bottom:4px}
+  .sidebar .sub{font-size:8pt;color:#d4a89a;margin-bottom:32px}
+  .sidebar .info{margin-bottom:24px}
+  .sidebar .info .lbl{font-size:6.5pt;text-transform:uppercase;letter-spacing:2px;color:#c48d7c;margin-bottom:2px}
+  .sidebar .info .val{font-size:9pt;color:#f0d5cc}
+  .sidebar .footer-info{font-size:7pt;color:#c48d7c}
+  .main{flex:1;padding:36px 40px;background:#fdf9f7}
+  .main .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:32px}
+  .main .top h2{font-size:14pt;font-weight:600;color:#7a3b2e;letter-spacing:1px;text-transform:uppercase}
+  .main .top .inv-ref{text-align:right;font-size:9pt;color:#889}
+  table{width:100%;border-collapse:collapse;margin-bottom:24px;font-size:9.5pt}
+  th{text-align:left;color:#c48d7c;font-size:7pt;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;padding:8px 4px;border-bottom:1px solid #e8d5ce}
+  td{padding:10px 4px;border-bottom:1px solid #f0e4df;color:#444}
+  td:last-child,th:last-child{text-align:right}
+  .totals{margin-left:auto;width:260px;background:#fff;padding:16px 20px;border-radius:8px;box-shadow:0 1px 4px rgba(122,59,46,.08)}
+  .totals .row{display:flex;justify-content:space-between;padding:5px 0;font-size:9.5pt;color:#555}
+  .totals .row.total{border-top:1px solid #7a3b2e;padding-top:8px;margin-top:4px;font-size:12pt;font-weight:700;color:#7a3b2e}
+  @media print{
+    .sidebar{position:fixed;top:0;left:0;bottom:0;width:220px;height:100vh}
+    .main{margin-left:220px;padding:36px 40px}
+    .totals{box-shadow:none;border:1px solid #e8d5ce}
+  }
+</style></head><body>
+<div class="sidebar">
+  <div>
+    <h1>Jayvee Gonzales</h1>
+    <div class="sub">Video Editor & Freelancer</div>
+    <div class="info"><div class="lbl">Client</div><div class="val">Client Name</div></div>
+    <div class="info"><div class="lbl">Period</div><div class="val">May 1 — May 23, 2026</div></div>
+    <div class="info"><div class="lbl">Payment</div><div class="val">Due in 15 days</div></div>
+  </div>
+  <div class="footer-info">INV-ABC123</div>
+</div>
+<div class="main">
+  <div class="top"><h2>Invoice</h2><div class="inv-ref">May 23, 2026</div></div>
+  <table><thead><tr><th>Date</th><th>Description</th><th style="text-align:center">Hours</th><th style="text-align:right">Rate</th><th style="text-align:right">Amount</th></tr></thead>
+  <tbody>
+  <tr><td>May 2</td><td>Wedding highlight draft</td><td style="text-align:center">3.50</td><td style="text-align:right">$25.00</td><td style="text-align:right">$87.50</td></tr>
+  <tr><td>May 5</td><td>Color grading</td><td style="text-align:center">2.00</td><td style="text-align:right">$25.00</td><td style="text-align:right">$50.00</td></tr>
+  <tr><td>May 8</td><td>Client revisions</td><td style="text-align:center">1.50</td><td style="text-align:right">$25.00</td><td style="text-align:right">$37.50</td></tr>
+  <tr><td>May 12</td><td>Final export</td><td style="text-align:center">1.00</td><td style="text-align:right">$25.00</td><td style="text-align:right">$25.00</td></tr>
+  </tbody></table>
+  <div class="totals">
+    <div class="row"><span>Total Hours</span><span>8.00</span></div>
+    <div class="row total"><span>Total Due</span><span>$200.00</span></div>
+  </div>
+</div>
+</body></html>
