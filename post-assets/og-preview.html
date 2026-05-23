@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#121826;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.card{width:1200px;height:630px;padding:60px;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden}
+.bg{position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(135deg,#121826 0%,#1a1f35 50%,#121826 100%);z-index:0}
+.circle-1{position:absolute;top:-100px;right:-80px;width:350px;height:350px;border-radius:50%;background:radial-gradient(circle,rgba(0,212,170,0.1),transparent 70%);z-index:0}
+.circle-2{position:absolute;bottom:-60px;left:-60px;width:250px;height:250px;border-radius:50%;background:radial-gradient(circle,rgba(0,168,232,0.08),transparent 70%);z-index:0}
+.content{position:relative;z-index:1}
+h1{color:#fff;font-size:52px;font-weight:800;line-height:1.1;margin-bottom:12px}
+h1 span{color:#00D4AA}
+p{color:#8888aa;font-size:22px;margin-bottom:28px;max-width:700px;line-height:1.4}
+.tags{display:flex;gap:10px}
+.tag{padding:8px 18px;border-radius:20px;font-size:15px;font-weight:600}
+.tag-green{background:rgba(0,212,170,.15);color:#00D4AA}
+.tag-blue{background:rgba(0,168,232,.15);color:#00A8E8}
+.tag-white{background:rgba(255,255,255,.1);color:#ccc}
+.badge{position:absolute;bottom:40px;right:50px;display:flex;align-items:center;gap:8px;color:#555;font-size:14px;z-index:1}
+.badge .dot{width:6px;height:6px;border-radius:50%;background:#00D4AA}
+</style></head><body>
+<div class="card">
+<div class="bg"></div>
+<div class="circle-1"></div>
+<div class="circle-2"></div>
+<div class="content">
+<h1>Bilang <span>—</span> Track<br>Your Billable Hours</h1>
+<p>Free offline time tracker + invoice generator<br>for PH freelancers. No signup needed.</p>
+<div class="tags">
+<div class="tag tag-green">⏱ Timer</div>
+<div class="tag tag-blue">📄 Invoice</div>
+<div class="tag tag-white">🔒 Offline</div>
+</div>
+</div>
+<div class="badge"><div class="dot"></div>jaytech-tips.github.io/bilang</div>
+</div>
+</body></html>
