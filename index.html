@@ -268,6 +268,7 @@
     <div class="tutorial-step"><div class="tutorial-num">1</div><div><h4>Quick-Start or Manual</h4><p>Click a <strong>preset button</strong> above the timer, or type a client name + rate. Press <kbd>Enter</kbd> to start tracking.</p></div></div>
     <div class="tutorial-step"><div class="tutorial-num">2</div><div><h4>Track Your Time</h4><p><strong>⏸ Pause</strong> for breaks, <strong>✅ Done</strong> to finish and save, <strong>✕ Cancel</strong> to end without logging billable time (session is still saved as "Cancelled" so no data is lost).</p></div></div>
     <div class="tutorial-step"><div class="tutorial-num">3</div><div><h4>Review & Filter</h4><p>Click a client name to see their history. <strong>📊</strong> for weekly/monthly summaries. <strong>📥</strong> to backup.</p></div></div>
+    <div class="tutorial-step"><div class="tutorial-num">4</div><div><h4>Bill Your Client</h4><p>Click <strong>📄</strong> to generate an invoice. Pick a client, date range, and payment terms — then save as PDF. Ready to send.</p></div></div>
     <div class="modal-actions"><button class="btn btn-primary btn-sm" onclick="closeTutorial()">Got it!</button></div>
   </div>
 </div>
@@ -355,7 +356,10 @@
       <br>
       <p style="color:var(--muted);font-size:.75rem">Last updated: May 23, 2026 · Built by Jaytech Tips for the PH freelance community.</p>
     </div>
-    <div class="modal-actions"><button class="btn btn-primary btn-sm" onclick="toggleModal('termsModal')">Got it</button></div>
+    <div class="modal-actions" id="termsActions">
+      <button class="btn btn-primary btn-sm" onclick="acceptTerms()">I Agree</button>
+      <button class="btn btn-outline btn-sm" onclick="toggleModal('termsModal')" id="termsGotIt" style="display:none">Got it</button>
+    </div>
   </div>
 </div>
 
@@ -443,7 +447,7 @@
 // ============================================================
 // DATA LAYER
 // ============================================================
-const SK='client_clock_data',TK='client_clock_timer',WK='client_clock_warn',TUK='client_clock_tutorial';
+const SK='client_clock_data',TK='client_clock_timer',WK='client_clock_warn',TUK='client_clock_tutorial',TAK='bilang_terms';
 
 function dd(){return{sessions:[],clientRates:{},presets:[],settings:{defaultRate:25,currency:'$',darkMode:false,businessName:'',businessEmail:''}}}
 function ld(){try{const r=localStorage.getItem(SK);if(!r)return dd();const d=JSON.parse(r);return{sessions:d.sessions||[],clientRates:d.clientRates||{},presets:d.presets||[],settings:{...dd().settings,...(d.settings||{})}}}catch{return dd()}}
@@ -640,6 +644,14 @@ function clearTimer(){
 let cf=null;
 function filterByClient(n){cf=n;document.getElementById('filterBar').classList.add('visible');document.getElementById('filterClientName').textContent=n;render()}
 function clearClientFilter(){cf=null;document.getElementById('filterBar').classList.remove('visible');render()}
+
+// ============================================================
+// TERMS
+// ============================================================
+function acceptTerms(){
+  localStorage.setItem(TAK,'1');
+  document.getElementById('termsModal').classList.remove('active');
+}
 
 // ============================================================
 // TUTORIAL
@@ -865,7 +877,12 @@ setInterval(()=>{if(ts?.running){updateDisplay();svt()}},500);
 // INIT
 // ============================================================
 applyDark();if(localStorage.getItem(WK))document.getElementById('warningBanner').classList.add('hidden');
-if(!localStorage.getItem(TUK))showTutorial();
+// Show terms on first visit (blocking)
+if(!localStorage.getItem(TAK)){
+  document.getElementById('termsModal').classList.add('active');
+} else if(!localStorage.getItem(TUK)){
+  showTutorial();
+}
 
 const s=ldt();
 if(s){
