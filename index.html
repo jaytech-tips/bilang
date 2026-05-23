@@ -223,7 +223,7 @@
       <button class="icon-btn" onclick="toggleModal('summaryModal')" title="Summary">📊</button>
       <button class="icon-btn" onclick="toggleModal('settingsModal')" title="Settings">⚙️</button>
       <button class="icon-btn" onclick="toggleModal('exportModal')" title="Export/Backup">📥</button>
-      <button class="icon-btn" onclick="toggleModal('feedbackModal')" title="Suggestions">💬</button>
+      <button class="icon-btn" onclick="toggleModal('feedbackModal')" title="Suggestions">💬 Suggestions</button>
     </div>
   </header>
 
@@ -347,8 +347,10 @@
     <h2>✏️ Edit Session</h2>
     <label>Client</label><input type="text" id="editClient">
     <label>Date</label><input type="date" id="editDate">
-    <label>Duration (minutes)</label><input type="number" id="editDuration" min="1" step="1">
-    <label>Hourly Rate</label><input type="number" id="editRate" min="0" step="1">
+    <label>Duration</label>
+    <div style="padding:9px 12px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:.9rem;margin-bottom:10px;background:var(--input-bg);color:var(--text)" id="editDurationDisplay"></div>
+    <label>Hourly Rate</label>
+    <div style="padding:9px 12px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:.9rem;margin-bottom:10px;background:var(--input-bg);color:var(--text)" id="editRateDisplay"></div>
     <label>Status</label>
     <select id="editStatus">
       <option value="completed">✅ Completed</option>
@@ -555,7 +557,7 @@ function pauseTimer(){
 
 function doneTimer(){
   if(!ts)return;
-  const now=Date.now(),elapsedSec=ts.running?(now-ts.startTime)/1000:ts.elapsed;
+  const now=Date.now(),elapsedSec=ts.running?(now-ts.startTime)/1000+ts.elapsed:ts.elapsed;
   if(elapsedSec<5){showToast('Too short (<5s)');return}
 
   const client=document.getElementById('clientInput').value.trim()||'Session';
@@ -574,7 +576,7 @@ function doneTimer(){
 function stopTimer(){
   if(!ts)return;
   // Save as cancelled instead of discarding
-  const now=Date.now(),elapsedSec=ts.running?(now-ts.startTime)/1000:ts.elapsed;
+  const now=Date.now(),elapsedSec=ts.running?(now-ts.startTime)/1000+ts.elapsed:ts.elapsed;
   if(elapsedSec>=5){
     const client=document.getElementById('clientInput').value.trim()||'Session';
     const cancelNotes=document.getElementById('sessionNotes').value.trim();
@@ -603,7 +605,7 @@ function clearClientFilter(){cf=null;document.getElementById('filterBar').classL
 // TUTORIAL
 // ============================================================
 function showTutorial(){toggleModal('tutorialModal')}
-function closeTutorial(){localStorage.setItem(TUK,'1');toggleModal('tutorialModal')}
+function closeTutorial(){localStorage.setItem(TUK,'1');toggleModal('tutorialModal');setTimeout(()=>showToast('Got feedback? Click the 💬 Suggestions button!'),400)}
 
 // ============================================================
 // RENDER
@@ -640,8 +642,8 @@ function switchTab(n){document.querySelectorAll('.tab').forEach(t=>t.classList.t
 // ============================================================
 function deleteSession(id){if(!confirm('Delete?'))return;data.sessions=data.sessions.filter(s=>s.id!==id);sv();render();showToast('Deleted')}
 let eid=null;
-function editSession(id){const s=data.sessions.find(x=>x.id===id);if(!s)return;eid=id;document.getElementById('editClient').value=s.client;const d=new Date(s.timestamp);document.getElementById('editDate').value=d.toISOString().slice(0,10);document.getElementById('editDuration').value=Math.round(s.duration/60);document.getElementById('editRate').value=s.rate;document.getElementById('editStatus').value=s.status||'completed';document.getElementById('editNotes').value=s.notes||'';toggleModal('editModal')}
-function saveEditSession(){if(!eid)return;const s=data.sessions.find(x=>x.id===eid);if(!s)return;s.client=document.getElementById('editClient').value.trim();s.duration=parseInt(document.getElementById('editDuration').value)*60;s.rate=parseFloat(document.getElementById('editRate').value)||data.settings.defaultRate;s.status=document.getElementById('editStatus').value;s.notes=document.getElementById('editNotes').value.trim();const nd=document.getElementById('editDate').value;if(nd){const o=new Date(s.timestamp);const d=new Date(nd+'T'+o.toTimeString().slice(0,5));s.timestamp=d.toISOString();s.start=d.getTime()-s.duration*1000;s.end=d.getTime()}sv();render();toggleModal('editModal');showToast('Updated')}
+function editSession(id){const s=data.sessions.find(x=>x.id===id);if(!s)return;eid=id;document.getElementById('editClient').value=s.client;const d=new Date(s.timestamp);document.getElementById('editDate').value=d.toISOString().slice(0,10);document.getElementById('editDurationDisplay').textContent=fmtShort(s.duration)+' ('+Math.round(s.duration/60)+' min)';document.getElementById('editRateDisplay').textContent=data.settings.currency+s.rate+'/hr';document.getElementById('editStatus').value=s.status||'completed';document.getElementById('editNotes').value=s.notes||'';toggleModal('editModal')}
+function saveEditSession(){if(!eid)return;const s=data.sessions.find(x=>x.id===eid);if(!s)return;s.client=document.getElementById('editClient').value.trim();s.status=document.getElementById('editStatus').value;s.notes=document.getElementById('editNotes').value.trim();const nd=document.getElementById('editDate').value;if(nd){const o=new Date(s.timestamp);const d=new Date(nd+'T'+o.toTimeString().slice(0,5));s.timestamp=d.toISOString();s.start=d.getTime()-s.duration*1000;s.end=d.getTime()}sv();render();toggleModal('editModal');showToast('Updated')}
 
 // ============================================================
 // SETTINGS / MODALS

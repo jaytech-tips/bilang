@@ -4,6 +4,19 @@ All notable changes to Bilang (formerly Client Clock), tracked from initial buil
 
 ---
 
+## v2.2.0 — May 23, 2026
+
+### Fixed
+- **Resume duration bug** — `doneTimer()` and `stopTimer()` now add back `ts.elapsed` when timer is running, fixing the bug where resumed sessions only recorded time since resume
+- **GCash QR 404** — committed the actual QR image. Support modal now loads it properly
+
+### Changed
+- **Edit modal** — Duration and Hourly Rate are now read-only. Only Client, Date, Status, and Notes can be edited. Prevents time cheating
+- **Suggestions button** — now shows "💬 Suggestions" text instead of just the icon
+- **Tutorial** — after closing, shows a toast: "Got feedback? Click the 💬 Suggestions button!"
+
+---
+
 ## v2.1.0 — May 23, 2026
 
 ### Changed
